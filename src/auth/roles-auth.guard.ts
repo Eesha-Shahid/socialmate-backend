@@ -1,4 +1,9 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+/* eslint-disable prettier/prettier */
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { UserType } from 'src/common/enums/users.enum';
@@ -10,7 +15,10 @@ export class RolesAuthGuard extends AuthGuard('jwt') {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredUserTypes = this.reflector.get<UserType[]>('roles', context.getHandler());
+    const requiredUserTypes = this.reflector.get<UserType[]>(
+      'roles',
+      context.getHandler(),
+    );
 
     if (!requiredUserTypes) {
       return true; // No roles defined, allow access
@@ -25,8 +33,8 @@ export class RolesAuthGuard extends AuthGuard('jwt') {
 
     const user = context.switchToHttp().getRequest().user;
 
-    if (requiredUserTypes.includes(user.userType)) {
-      return true; 
+    if (requiredUserTypes.includes(user.user_type)) {
+      return true;
     }
 
     throw new UnauthorizedException('Insufficient role');

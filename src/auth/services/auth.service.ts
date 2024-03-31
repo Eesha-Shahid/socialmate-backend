@@ -24,6 +24,7 @@ import { SavePaymentDto } from 'src/payments/dto/save-payment.dto';
 import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 import { UserType } from 'src/common/enums/users.enum';
 import { Payment } from 'src/payments/schemas/payment.schema';
+import * as mongoose from 'mongoose';
 
 @Injectable()
 export class AuthService {
@@ -48,7 +49,7 @@ export class AuthService {
     );
     const createdUser = await this.userModel.create({
       ...signUpDto,
-      stripeCustomerId: stripeCustomer.id,
+      stripe_customer_id: stripeCustomer.id,
       password: hashedPassword,
     });
 
@@ -306,7 +307,7 @@ export class AuthService {
 
   async subscribe(userId: string, customerId: string) {
     const user = await this.userModel.findById(userId);
-    if (user.userType === UserType.Premium) {
+    if (user.user_type === UserType.Premium) {
       console.error('SUBSCRIBE.ALREADY_PREMIUM_USER');
       return null;
     }
@@ -330,13 +331,13 @@ export class AuthService {
 
     try {
       const user = await this.userModel.findOne({
-        stripeCustomerId: customerId,
+        stripe_customer_id: customerId,
       });
       const updatedUser = await this.userModel.findByIdAndUpdate(
         user.id,
         {
           $push: { payments: { ...savePaymentDto } },
-          $set: { userType: UserType.Premium }, // Set user type to premium
+          $set: { user_type: UserType.Premium }, // Set user type to premium
         },
         { new: true },
       );
@@ -370,7 +371,7 @@ export class AuthService {
         return null;
       }
 
-      if (user.userType !== UserType.Premium) {
+      if (user.user_type !== UserType.Premium) {
         console.error('CANCEL_SUBSCRIPTION.NOT_PREMIUM_USER');
         return null;
       }
@@ -378,7 +379,7 @@ export class AuthService {
       const updatedUser = await this.userModel.findByIdAndUpdate(
         userId,
         {
-          $set: { userType: UserType.Standard },
+          $set: { user_type: UserType.Standard },
         },
         { new: true },
       );
@@ -388,5 +389,81 @@ export class AuthService {
       console.error('CANCEL_SUBSCRIPTION.', error);
       return null;
     }
+  }
+
+  async getInstagramAnalyticsSummary(userId: string): Promise<any> {
+    const { ObjectId } = mongoose.Types;
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'instagram_user',
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'user_details',
+        },
+      },
+      {
+        $unwind: '$user_details',
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$user_details',
+        },
+      },
+      {
+        $project: {
+          reach: {
+            $let: {
+              vars: {
+                data: '$reach.data.total_value.value',
+              },
+              in: {
+                value: { $arrayElemAt: ['$$data', 0] },
+                last_value: { $arrayElemAt: ['$$data', -1] },
+              },
+            },
+          },
+          likes: {
+            $let: {
+              vars: {
+                data: '$likes.data.total_value.value',
+              },
+              in: {
+                value: { $arrayElemAt: ['$$data', 0] },
+                last_value: { $arrayElemAt: ['$$data', -1] },
+              },
+            },
+          },
+          comments: {
+            $let: {
+              vars: {
+                data: '$comments.data.total_value.value',
+              },
+              in: {
+                value: { $arrayElemAt: ['$$data', 0] },
+                last_value: { $arrayElemAt: ['$$data', -1] },
+              },
+            },
+          },
+          follows_and_unfollows: {
+            $let: {
+              vars: {
+                data: '$follows_and_unfollows.data.total_value.value',
+              },
+              in: {
+                value: { $arrayElemAt: ['$$data', 0] },
+                last_value: { $arrayElemAt: ['$$data', -1] },
+              },
+            },
+          },
+        },
+      },
+    ]);
+    return data[0];
   }
 }

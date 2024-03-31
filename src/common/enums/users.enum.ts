@@ -1,4 +1,5 @@
+/* eslint-disable prettier/prettier */
 export enum UserType {
-    Standard = 'Standard',
-    Premium = 'Premium',
+  Standard = 'Standard',
+  Premium = 'Premium'
 }

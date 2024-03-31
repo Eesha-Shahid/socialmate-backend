@@ -148,7 +148,7 @@ export class AuthController {
   async subscribe(@Req() req) {
     return await this.authService.subscribe(
       req.user.id,
-      req.user.stripeCustomerId,
+      req.user.stripe_customer_id,
     );
   }
 
@@ -173,4 +173,10 @@ export class AuthController {
   //     console.log("Query:",req.query)
   //     // res.redirect('http://localhost:4000/auth/twitter/callback');
   // }
+
+  @Get('analytics-summary/instagram')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getInstagramAnalyticsSummary(@Req() req) {
+    return await this.authService.getInstagramAnalyticsSummary(req.user.id);
+  }
 }

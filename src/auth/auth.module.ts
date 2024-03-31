@@ -23,6 +23,8 @@ import { RedditService } from './services/reddit.service';
 import { MailModule } from 'src/mail/mail.module';
 import { CardModule } from 'src/card/card.module';
 import { SchedulerModule } from 'src/scheduler/scheduler.module';
+import { UserController } from './controllers/user.controller';
+import { UserService } from './services/user.service';
 
 @Module({
   imports: [
@@ -31,7 +33,7 @@ import { SchedulerModule } from 'src/scheduler/scheduler.module';
       useFactory: () => ({
         secret: process.env.JWT_SECRET,
         signOptions: {
-            expiresIn: process.env.JWT_EXPIRES,
+          expiresIn: process.env.JWT_EXPIRES,
         },
       }),
     }),
@@ -43,8 +45,13 @@ import { SchedulerModule } from 'src/scheduler/scheduler.module';
     CardModule,
     forwardRef(() => SchedulerModule),
   ],
-  controllers: [AuthController, RedditController, PhotoController ],
-  providers: [AuthService, RedditService, JwtStrategy],
-  exports: [AuthService, JwtStrategy, RedditService, PassportModule]
+  controllers: [
+    AuthController,
+    UserController,
+    RedditController,
+    PhotoController,
+  ],
+  providers: [AuthService, UserService, RedditService, JwtStrategy],
+  exports: [AuthService, JwtStrategy, RedditService, PassportModule],
 })
 export class AuthModule {}

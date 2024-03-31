@@ -12,20 +12,22 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { MailModule } from './mail/mail.module';
 import { CardModule } from './card/card.module';
-import { ScheduleModule } from '@nestjs/schedule';
-import { SchedulerModule } from './scheduler/scheduler.module';
+// import { ScheduleModule } from '@nestjs/schedule';
+// import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(), 
-    MongooseModule.forRoot(process.env.MONGO_URI, { dbName: 'sm_db',}),
-    AuthModule, 
+    ConfigModule.forRoot(),
+    MongooseModule.forRoot(process.env.MONGO_URI, {
+      dbName: 'socialMate-testing',
+    }),
+    AuthModule,
     StripeModule,
     NestjsFormDataModule,
     MailModule,
     CardModule,
-    ScheduleModule.forRoot(),
-    SchedulerModule
+    // ScheduleModule.forRoot(),
+    // SchedulerModule
   ],
   controllers: [AppController],
   providers: [AppService],

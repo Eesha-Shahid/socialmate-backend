@@ -1,24 +1,23 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-
+/* eslint-disable prettier/prettier */
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 @Schema({ timestamps: true })
 export class Card {
+  [x: string]: any;
 
-    [x: string]: any;
+  @Prop({ default: false })
+  default: boolean;
 
-    @Prop({ default: false })
-    default: boolean;
-    
-    @Prop()
-    cardNumber: string;
+  @Prop()
+  cardNumber: string;
 
-    @Prop()
-    expMonth: Number
+  @Prop()
+  expMonth: number;
 
-    @Prop()
-    expYear: Number
+  @Prop()
+  expYear: number;
 
-    @Prop()
-    cvc: String
+  @Prop()
+  cvc: string;
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);
