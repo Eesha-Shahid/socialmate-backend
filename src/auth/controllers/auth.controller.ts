@@ -173,10 +173,4 @@ export class AuthController {
   //     console.log("Query:",req.query)
   //     // res.redirect('http://localhost:4000/auth/twitter/callback');
   // }
-
-  @Get('analytics-summary/instagram')
-  @Roles(UserType.Standard, UserType.Premium)
-  async getInstagramAnalyticsSummary(@Req() req) {
-    return await this.authService.getInstagramAnalyticsSummary(req.user.id);
-  }
 }

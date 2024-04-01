@@ -24,7 +24,6 @@ import { SavePaymentDto } from 'src/payments/dto/save-payment.dto';
 import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 import { UserType } from 'src/common/enums/users.enum';
 import { Payment } from 'src/payments/schemas/payment.schema';
-import * as mongoose from 'mongoose';
 
 @Injectable()
 export class AuthService {
@@ -389,81 +388,5 @@ export class AuthService {
       console.error('CANCEL_SUBSCRIPTION.', error);
       return null;
     }
-  }
-
-  async getInstagramAnalyticsSummary(userId: string): Promise<any> {
-    const { ObjectId } = mongoose.Types;
-    const data = await this.userModel.aggregate([
-      {
-        $match: {
-          _id: new ObjectId(userId),
-        },
-      },
-      {
-        $lookup: {
-          from: 'instagram_user',
-          localField: '_id',
-          foreignField: 'user_id',
-          as: 'user_details',
-        },
-      },
-      {
-        $unwind: '$user_details',
-      },
-      {
-        $replaceRoot: {
-          newRoot: '$user_details',
-        },
-      },
-      {
-        $project: {
-          reach: {
-            $let: {
-              vars: {
-                data: '$reach.data.total_value.value',
-              },
-              in: {
-                value: { $arrayElemAt: ['$$data', 0] },
-                last_value: { $arrayElemAt: ['$$data', -1] },
-              },
-            },
-          },
-          likes: {
-            $let: {
-              vars: {
-                data: '$likes.data.total_value.value',
-              },
-              in: {
-                value: { $arrayElemAt: ['$$data', 0] },
-                last_value: { $arrayElemAt: ['$$data', -1] },
-              },
-            },
-          },
-          comments: {
-            $let: {
-              vars: {
-                data: '$comments.data.total_value.value',
-              },
-              in: {
-                value: { $arrayElemAt: ['$$data', 0] },
-                last_value: { $arrayElemAt: ['$$data', -1] },
-              },
-            },
-          },
-          follows_and_unfollows: {
-            $let: {
-              vars: {
-                data: '$follows_and_unfollows.data.total_value.value',
-              },
-              in: {
-                value: { $arrayElemAt: ['$$data', 0] },
-                last_value: { $arrayElemAt: ['$$data', -1] },
-              },
-            },
-          },
-        },
-      },
-    ]);
-    return data[0];
   }
 }

@@ -13,6 +13,12 @@ import { UserType } from 'src/common/enums/users.enum';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get('profile')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getProfile(@Req() req) {
+    return await this.userService.getProfile(req.user.id);
+  }
+
   @Get('account-details/instagram')
   @Roles(UserType.Standard, UserType.Premium)
   async getInstagramAccountDetails(@Req() req) {
@@ -35,5 +41,17 @@ export class UserController {
   @Roles(UserType.Standard, UserType.Premium)
   async getInstagramAudienceInsights(@Req() req) {
     return await this.userService.getInstagramAudienceInsights(req.user.id);
+  }
+
+  @Get('milestones/instagram')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getInstagramMilestones(@Req() req) {
+    return await this.userService.getInstagramMilestones(req.user.id);
+  }
+
+  @Get('goals/instagram')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getInstagramGoals(@Req() req) {
+    return await this.userService.getInstagramGoals(req.user.id);
   }
 }

@@ -12,6 +12,10 @@ export class UserService {
     private userModel: Model<User>,
   ) {}
 
+  async getProfile(userId: string): Promise<any> {
+    return await this.userModel.findById(userId);
+  }
+
   async getInstagramAccountDetails(userId: string): Promise<any> {
     const data = await this.userModel.aggregate([
       {
@@ -238,6 +242,136 @@ export class UserService {
         $project: {
           audience_country: 1,
           audience_gender_age: 1,
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async getInstagramMilestones(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'benchmark',
+          let: {
+            id: '$_id',
+          },
+          pipeline: [
+            {
+              $match: {
+                $and: [
+                  { $expr: { $eq: ['$user_id', '$$id'] } },
+                  { platform: 'instagram' },
+                ],
+              },
+            },
+          ],
+          as: 'user_details',
+        },
+      },
+      {
+        $unwind: '$user_details',
+      },
+      {
+        $group: {
+          _id: '$user_details.metric',
+          user_id: { $first: '$user_details.user_id' },
+          value: { $first: '$user_details.value' },
+          latestDate: { $first: '$user_details.createdAt' },
+        },
+      },
+      {
+        $group: {
+          _id: '$user_id',
+          metrics: {
+            $push: {
+              k: '$_id',
+              v: '$value',
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          data: {
+            $arrayToObject: '$metrics',
+          },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$data',
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async getInstagramGoals(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'goal',
+          let: {
+            id: '$_id',
+          },
+          pipeline: [
+            {
+              $match: {
+                $and: [
+                  { $expr: { $eq: ['$user_id', '$$id'] } },
+                  { platform: 'instagram' },
+                ],
+              },
+            },
+          ],
+          as: 'user_details',
+        },
+      },
+      {
+        $unwind: '$user_details',
+      },
+      {
+        $group: {
+          _id: '$user_details.metric',
+          user_id: { $first: '$user_details.user_id' },
+          value: { $first: '$user_details.value' },
+          latestDate: { $first: '$user_details.createdAt' },
+        },
+      },
+      {
+        $group: {
+          _id: '$user_id',
+          metrics: {
+            $push: {
+              k: '$_id',
+              v: '$value',
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          data: {
+            $arrayToObject: '$metrics',
+          },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$data',
         },
       },
     ]);
