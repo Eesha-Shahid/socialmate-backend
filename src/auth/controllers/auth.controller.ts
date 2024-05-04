@@ -41,12 +41,16 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
-  signUp(@Body() signUpDto: SignUpDto): Promise<{ token: string }> {
+  signUp(
+    @Body() signUpDto: SignUpDto,
+  ): Promise<{ token: string; message: string }> {
     return this.authService.signUp(signUpDto);
   }
 
   @Post('login')
-  login(@Body() loginDto: LoginDto): Promise<{ user: User; token: string }> {
+  login(
+    @Body() loginDto: LoginDto,
+  ): Promise<{ user: User; token: string; message: string }> {
     return this.authService.login(loginDto);
   }
 
@@ -71,7 +75,9 @@ export class AuthController {
   }
 
   @Post('send-forgot-email')
-  async sendEmail(@Body() emailDto: EmailDto) {
+  async sendEmail(
+    @Body() emailDto: EmailDto,
+  ): Promise<{ success: boolean; message: string }> {
     return await this.authService.sendResetEmail(emailDto);
   }
 
@@ -93,11 +99,12 @@ export class AuthController {
     );
   }
 
-  @Patch('change-forgot-password')
-  async changeForgotPassword(
+  @Patch('reset-password')
+  async resetPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<User> {
-    return await this.authService.changeForgotPassword(forgotPasswordDto);
+  ): Promise<{ user: User | null; success: boolean; message: string }> {
+    console.log(forgotPasswordDto);
+    return await this.authService.resetPassword(forgotPasswordDto);
   }
 
   @Patch('update-username')

@@ -1,19 +1,10 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, Validate } from 'class-validator';
-import { MatchPasswords } from '../match-passwords.validator';
-
+import { IsNotEmpty, IsString } from 'class-validator';
 export class ForgotPasswordDto {
+  @IsNotEmpty()
+  @IsString()
+  password: string;
 
-    @IsNotEmpty()
-    @IsEmail()
-    email: string
-
-    @IsNotEmpty()
-    @IsString()
-    @MinLength(8) 
-    newPassword: string;
-
-    @IsNotEmpty()
-    @IsString()
-    @Validate(MatchPasswords, ['newPassword'])
-    confirmPassword: string;
+  @IsNotEmpty()
+  @IsString()
+  resetToken: string;
 }

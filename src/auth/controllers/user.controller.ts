@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 
 // Services
 import { UserService } from '../services/user.service';
@@ -7,6 +7,7 @@ import { UserService } from '../services/user.service';
 import { RolesAuthGuard } from '../roles-auth.guard';
 import { Roles } from '../roles.decorator';
 import { UserType } from 'src/common/enums/users.enum';
+import { GenerateCaptionDto } from '../dto/generateCaption.dto';
 
 @Controller('user')
 @UseGuards(RolesAuthGuard)
@@ -53,5 +54,32 @@ export class UserController {
   @Roles(UserType.Standard, UserType.Premium)
   async getInstagramGoals(@Req() req) {
     return await this.userService.getInstagramGoals(req.user.id);
+  }
+
+  @Get('scheduled-posts')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getScheduledPosts(@Req() req) {
+    return await this.userService.getScheduledPosts(req.user.id);
+  }
+
+  @Get('payment-methods')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getPaymentMethods(@Req() req) {
+    return await this.userService.getPaymentMethods(req.user.id);
+  }
+
+  @Get('subscription-history')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getSubscriptionHisotry(@Req() req) {
+    return await this.userService.getSubscriptionHistory(req.user.id);
+  }
+
+  @Post('generate-caption')
+  @Roles(UserType.Standard, UserType.Premium)
+  async createProject(
+    @Body() generateCaptionDto: GenerateCaptionDto,
+  ): Promise<any> {
+    const data = this.userService.generateCaption(generateCaptionDto);
+    return data;
   }
 }

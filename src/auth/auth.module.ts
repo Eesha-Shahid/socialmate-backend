@@ -25,6 +25,7 @@ import { CardModule } from 'src/card/card.module';
 import { SchedulerModule } from 'src/scheduler/scheduler.module';
 import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { UserService } from './services/user.service';
     NestjsFormDataModule,
     MailModule,
     CardModule,
+    HttpModule,
     forwardRef(() => SchedulerModule),
   ],
   controllers: [

@@ -1,6 +1,4 @@
-import { IsNotEmpty, IsString, Matches, MinLength, Validate } from 'class-validator';
-import { MatchPasswords } from '../match-passwords.validator';
-
+import { IsNotEmpty, IsString } from 'class-validator';
 export class UpdateUsernameDto {
 
   @IsNotEmpty()

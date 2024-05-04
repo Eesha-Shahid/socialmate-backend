@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../schemas/user.schema';
 import * as mongoose from 'mongoose';
+import { GenerateCaptionDto } from '../dto/generateCaption.dto';
+import { HttpService } from '@nestjs/axios';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -10,6 +12,7 @@ export class UserService {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<User>,
+    private readonly httpService: HttpService,
   ) {}
 
   async getProfile(userId: string): Promise<any> {
@@ -376,5 +379,204 @@ export class UserService {
       },
     ]);
     return data[0];
+  }
+
+  // async getInstagramScheduledPosts(userId: string): Promise<any> {}
+
+  async getScheduledPosts(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'scheduledposts',
+          let: {
+            id: '$_id',
+          },
+          pipeline: [
+            {
+              $match: {
+                $and: [
+                  { $expr: { $eq: ['$user_id', '$$id'] } },
+                  // { platform: 'instagram' },
+                ],
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                user_id: 0,
+                user_created: 0,
+              },
+            },
+          ],
+          as: 'data',
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          data: 1,
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async getPaymentMethods(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'cards',
+          let: {
+            id: '$_id',
+          },
+          pipeline: [
+            {
+              $match: {
+                $and: [{ $expr: { $eq: ['$user_id', '$$id'] } }],
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                user_id: 0,
+              },
+            },
+            {
+              $sort: {
+                expiration_date: -1,
+              },
+            },
+          ],
+          as: 'data',
+        },
+      },
+      {
+        $project: {
+          data: 1,
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async getSubscriptionHistory(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'payments',
+          let: {
+            id: '$_id',
+          },
+          pipeline: [
+            {
+              $match: {
+                $and: [{ $expr: { $eq: ['$user_id', '$$id'] } }],
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                // user_id: 0,
+              },
+            },
+            {
+              $sort: {
+                expiration_date: -1,
+              },
+            },
+          ],
+          as: 'data',
+        },
+      },
+      {
+        $unwind: '$data',
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$data',
+        },
+      },
+      {
+        $lookup: {
+          from: 'cards',
+          let: {
+            card_id: '$card_id',
+          },
+          pipeline: [
+            {
+              $match: {
+                $and: [{ $expr: { $eq: ['$_id', '$$card_id'] } }],
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                holder_name: 1,
+                card_number: 1,
+              },
+            },
+          ],
+          as: 'card_data',
+        },
+      },
+      {
+        $unwind: '$card_data',
+      },
+      {
+        $project: {
+          user_id: 1,
+          status: 1,
+          expiration_date: 1,
+          amount: 1,
+          card_number: '$card_data.card_number',
+          holder_name: '$card_data.holder_name',
+        },
+      },
+      {
+        $group: {
+          _id: '$user_id',
+          data: { $push: '$$ROOT' },
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async generateCaption(generateCaptionDto: GenerateCaptionDto): Promise<any> {
+    try {
+      const res = await this.httpService
+        .post(
+          `${process.env.MODEL_API}/generate-caption`,
+          {
+            query: `Generate prompt for ${generateCaptionDto.queryString} post`,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        )
+        .toPromise();
+
+      return res.data; // Assuming that the response contains a 'data' field
+    } catch (error) {
+      console.error('Error generating caption:', error);
+      throw new InternalServerErrorException('Failed to generate caption');
+    }
   }
 }

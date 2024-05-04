@@ -1,18 +1,11 @@
-import { IsNotEmpty, IsString, Matches, MinLength, Validate } from 'class-validator';
-import { MatchPasswords } from '../match-passwords.validator';
-
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 export class ChangePasswordDto {
-
+  @IsNotEmpty()
   @IsString()
   currentPassword: string;
 
   @IsNotEmpty()
   @IsString()
-  @MinLength(8) 
+  @MinLength(8)
   newPassword: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @Validate(MatchPasswords, ['newPassword'])
-  confirmPassword: string;
 }

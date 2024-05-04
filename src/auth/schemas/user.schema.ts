@@ -27,6 +27,12 @@ export class User {
   user_type: UserType;
 
   @Prop()
+  resetToken: string;
+
+  @Prop()
+  resetTokenExpiry: Date;
+
+  @Prop()
   stripe_customer_id: string;
 
   @Prop({
@@ -79,12 +85,6 @@ export class User {
     subscription_expiry_reminder: boolean;
     subscription_renewal_reminder: boolean;
   };
-
-  //   @Prop({ type: [Card], default: [] })
-  //   cards: Card[];
-
-  //   @Prop({ type: [Payment], default: [] })
-  //   payments: Payment[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

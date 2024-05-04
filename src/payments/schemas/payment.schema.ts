@@ -1,24 +1,26 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { User } from 'src/auth/schemas/user.schema';
+import { Card } from 'src/card/schemas/card.schema';
+import { CardStatus } from 'src/common/enums/cards.enum';
 
 @Schema({ timestamps: true })
 export class Payment {
+  [x: string]: any;
 
-    [x: string]: any;
-    
-    @Prop()
-    card: string;
+  @Prop()
+  status: CardStatus;
 
-    @Prop()
-    amount: Number;
+  @Prop()
+  amount: number;
 
-    @Prop()
-    created: Number
+  @Prop()
+  expiration_date: Date;
 
-    @Prop()
-    currency: String
+  @Prop()
+  card_id: Card;
 
-    @Prop()
-    payment_method: String
+  @Prop()
+  user_id: User;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);

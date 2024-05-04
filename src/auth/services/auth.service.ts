@@ -24,7 +24,7 @@ import { SavePaymentDto } from 'src/payments/dto/save-payment.dto';
 import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 import { UserType } from 'src/common/enums/users.enum';
 import { Payment } from 'src/payments/schemas/payment.schema';
-
+import { randomBytes } from 'crypto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -39,7 +39,9 @@ export class AuthService {
   ) {}
 
   // Signup
-  async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
+  async signUp(
+    signUpDto: SignUpDto,
+  ): Promise<{ token: string; message: string }> {
     const salt = 10;
     const hashedPassword = await bcrypt.hash(signUpDto.password, salt);
     const stripeCustomer = await this.stripeService.createCustomer(
@@ -53,11 +55,13 @@ export class AuthService {
     });
 
     const token = this.jwtService.sign({ id: createdUser._id });
-    return { token };
+    return { token, message: 'Sign Up Successful' };
   }
 
   // Login
-  async login(loginDto: LoginDto): Promise<{ user: User; token: string }> {
+  async login(
+    loginDto: LoginDto,
+  ): Promise<{ user: User; token: string; message: string }> {
     const { email, password } = loginDto;
     const user = await this.userModel.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -65,7 +69,7 @@ export class AuthService {
     }
 
     const token = this.jwtService.sign({ id: user._id });
-    return { user, token };
+    return { user, token, message: 'Login Successful' };
   }
 
   async googleSignup({
@@ -107,15 +111,26 @@ export class AuthService {
     return await this.userModel.findById(userId);
   }
 
-  async sendResetEmail(emailDto: EmailDto) {
+  async sendResetEmail(
+    emailDto: EmailDto,
+  ): Promise<{ success: boolean; message: string }> {
     const { email } = emailDto;
     const user = await this.userModel.findOne({ email: email });
     if (!user) {
-      console.error('RESET_EMAIL.INVALID_EMAIL');
+      return { success: false, message: 'Invalid Email' };
     } else {
-      const resetLink = `http://localhost:3000/reset?email=${encodeURIComponent(
-        user.email,
-      )}`;
+      const resetToken = randomBytes(20).toString('hex');
+      await this.userModel.findByIdAndUpdate(
+        { _id: user._id },
+        {
+          $set: {
+            resetToken: resetToken,
+            resetTokenExpiry: Date.now() + 3600000,
+          },
+        },
+        { new: true },
+      );
+      const resetLink = `http://localhost:3000/reset-password?resetToken=${resetToken}`;
       const mailOptions = {
         transporterName: 'gmail',
         to: user.email,
@@ -127,7 +142,12 @@ export class AuthService {
         },
       };
       await this.mailService.setTransport();
-      return await this.mailService.sendEmail(mailOptions);
+      try {
+        await this.mailService.sendEmail(mailOptions);
+        return { success: true, message: 'Reset email sent' };
+      } catch (err) {
+        return { success: false, message: 'An error occured' };
+      }
     }
   }
 
@@ -145,13 +165,30 @@ export class AuthService {
     return await user.save();
   }
 
-  async changeForgotPassword(
+  async resetPassword(
     forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<User | null> {
-    const { email, newPassword } = forgotPasswordDto;
-    const user = await this.userModel.findOne({ email: email });
-    user.password = await bcrypt.hash(newPassword, 10);
-    return await user.save();
+  ): Promise<{ user: User | null; success: boolean; message: string }> {
+    const { password, resetToken } = forgotPasswordDto;
+    const user = await this.userModel.findOne({
+      resetToken,
+      resetTokenExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return {
+        user: null,
+        success: false,
+        message: 'Invalid or expired reset token',
+      };
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    const newUser = await user.save();
+    return {
+      user: newUser,
+      success: true,
+      message: 'Password Updated',
+    };
   }
 
   async updateUsername(
@@ -225,7 +262,7 @@ export class AuthService {
           $push: {
             cards: {
               ...addCardDto,
-              cardNumber: addCardDto.cardNumber,
+              card_number: addCardDto.card_number,
               default: isDefault,
             },
           },
@@ -323,7 +360,7 @@ export class AuthService {
     const paymentIntent =
       await this.stripeService.confirmCardPayment(clientSecret);
     const savePaymentDto = new SavePaymentDto();
-    savePaymentDto.card = defaultCard.cardNumber;
+    savePaymentDto.card = defaultCard.card_number;
     savePaymentDto.amount = paymentIntent.amount;
     savePaymentDto.currency = paymentIntent.currency;
     savePaymentDto.payment_method = 'Card';

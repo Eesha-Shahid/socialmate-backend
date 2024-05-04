@@ -8,13 +8,13 @@ export class Card {
   default: boolean;
 
   @Prop()
-  cardNumber: string;
+  card_number: string;
 
   @Prop()
-  expMonth: number;
+  exp_month: number;
 
   @Prop()
-  expYear: number;
+  exp_year: number;
 
   @Prop()
   cvc: string;

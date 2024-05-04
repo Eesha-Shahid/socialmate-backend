@@ -1,19 +1,18 @@
-import { IsNotEmpty, IsString } from "class-validator"
+/* eslint-disable prettier/prettier */
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class AddCardDto {
-    
-    @IsNotEmpty()
-    @IsString()
-    readonly cardNumber: String
+  @IsNotEmpty()
+  @IsString()
+  readonly card_number: string;
 
-    @IsNotEmpty()
-    readonly expMonth: Number
+  @IsNotEmpty()
+  readonly exp_month: number;
 
-    @IsNotEmpty()
-    readonly expYear: Number
+  @IsNotEmpty()
+  readonly exp_year: number;
 
-    @IsNotEmpty()
-    @IsString()
-    readonly cvc: String
-    
+  @IsNotEmpty()
+  @IsString()
+  readonly cvc: string;
 }
