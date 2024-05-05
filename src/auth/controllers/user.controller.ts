@@ -6,8 +6,9 @@ import { UserService } from '../services/user.service';
 // Auth Guard
 import { RolesAuthGuard } from '../roles-auth.guard';
 import { Roles } from '../roles.decorator';
-import { UserType } from 'src/common/enums/users.enum';
+import { UserType } from '../../common/enums/index';
 import { GenerateCaptionDto } from '../dto/generateCaption.dto';
+import { UpdateScheduledPostDto } from 'src/scheduledPost/dto/update-scheduled-post.dto';
 
 @Controller('user')
 @UseGuards(RolesAuthGuard)
@@ -60,6 +61,15 @@ export class UserController {
   @Roles(UserType.Standard, UserType.Premium)
   async getScheduledPosts(@Req() req) {
     return await this.userService.getScheduledPosts(req.user.id);
+  }
+
+  @Post('update-scheduled-post')
+  @Roles(UserType.Standard, UserType.Premium)
+  async updateScheduledPost(
+    @Req() req,
+    @Body() updateScheduledPostDto: UpdateScheduledPostDto,
+  ) {
+    return await this.userService.updateScheduledPost(updateScheduledPostDto);
   }
 
   @Get('payment-methods')

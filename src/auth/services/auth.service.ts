@@ -22,7 +22,7 @@ import { DeleteCardDto } from 'src/card/dto/delete-card.dto';
 import { Card } from 'src/card/schemas/card.schema';
 import { SavePaymentDto } from 'src/payments/dto/save-payment.dto';
 import { UpdateCardDto } from 'src/card/dto/update-card.dto';
-import { UserType } from 'src/common/enums/users.enum';
+import { UserType } from '../../common/enums/index';
 import { Payment } from 'src/payments/schemas/payment.schema';
 import { randomBytes } from 'crypto';
 @Injectable()

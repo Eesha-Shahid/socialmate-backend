@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { UserType } from 'src/common/enums/users.enum';
+import { UserType } from '../common/enums/index';
 
 @Injectable()
 export class RolesAuthGuard extends AuthGuard('jwt') {

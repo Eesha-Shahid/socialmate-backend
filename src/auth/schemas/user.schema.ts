@@ -1,9 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { UserType } from '../../common/enums/users.enum';
-import { SocialMediaPlatform } from 'src/common/enums/platforms.enum';
-// import { Card } from 'src/card/schemas/card.schema';
-// import { Payment } from 'src/payments/schemas/payment.schema';
-
+import { UserType, SocialMediaPlatform } from '../../common/enums/index';
 @Schema({ timestamps: true })
 export class User {
   [x: string]: any;

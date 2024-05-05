@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { User } from 'src/auth/schemas/user.schema';
 import { Card } from 'src/card/schemas/card.schema';
-import { CardStatus } from 'src/common/enums/cards.enum';
+import { CardStatus } from '../../common/enums/index';
 
 @Schema({ timestamps: true })
 export class Payment {

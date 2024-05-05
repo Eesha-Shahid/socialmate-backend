@@ -117,7 +117,6 @@ export class RedditService {
         },
       },
     );
-    console.log(response.data);
     const errors: string[] = [];
     let flag = false;
     for (const action of response.data.jquery) {

@@ -27,7 +27,7 @@ import { AddCardDto } from 'src/card/dto/add-card.dto';
 import { DeleteCardDto } from 'src/card/dto/delete-card.dto';
 import { OAuth2Client } from 'google-auth-library';
 import { Roles } from '../roles.decorator';
-import { UserType } from 'src/common/enums/users.enum';
+import { UserType } from '../../common/enums/index';
 import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 
 const client = new OAuth2Client(
@@ -103,7 +103,6 @@ export class AuthController {
   async resetPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
   ): Promise<{ user: User | null; success: boolean; message: string }> {
-    console.log(forgotPasswordDto);
     return await this.authService.resetPassword(forgotPasswordDto);
   }
 

@@ -5,6 +5,8 @@ import { User } from '../schemas/user.schema';
 import * as mongoose from 'mongoose';
 import { GenerateCaptionDto } from '../dto/generateCaption.dto';
 import { HttpService } from '@nestjs/axios';
+import { ScheduledPostService } from 'src/scheduledPost/services/scheduled-post.service';
+import { UpdateScheduledPostDto } from 'src/scheduledPost/dto/update-scheduled-post.dto';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -13,6 +15,7 @@ export class UserService {
     @InjectModel(User.name)
     private userModel: Model<User>,
     private readonly httpService: HttpService,
+    private readonly scheduledPostService: ScheduledPostService,
   ) {}
 
   async getProfile(userId: string): Promise<any> {
@@ -407,7 +410,6 @@ export class UserService {
             },
             {
               $project: {
-                _id: 0,
                 user_id: 0,
                 user_created: 0,
               },
@@ -418,12 +420,23 @@ export class UserService {
       },
       {
         $project: {
-          _id: 0,
           data: 1,
         },
       },
     ]);
     return data[0];
+  }
+
+  async updateScheduledPost(
+    updateScheduledPostDto: UpdateScheduledPostDto,
+  ): Promise<any> {
+    const res = await this.scheduledPostService.updateScheduledPost(
+      updateScheduledPostDto,
+    );
+    return {
+      post: res.post,
+      message: res.message || 'Post updated successfully!',
+    };
   }
 
   async getPaymentMethods(userId: string): Promise<any> {

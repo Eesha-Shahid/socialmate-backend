@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class SocialMediaCredentialsDto {
   @IsNotEmpty()

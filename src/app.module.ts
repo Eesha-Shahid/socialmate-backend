@@ -11,7 +11,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { MailModule } from './mail/mail.module';
-import { CardModule } from './card/card.module';
+// import { CardModule } from './card/card.module';
+import { ScheduledPostModule } from './scheduledPost/scheduled-post.module';
 // import { ScheduleModule } from '@nestjs/schedule';
 // import { SchedulerModule } from './scheduler/scheduler.module';
 
@@ -25,9 +26,10 @@ import { CardModule } from './card/card.module';
     StripeModule,
     NestjsFormDataModule,
     MailModule,
-    CardModule,
+    // CardModule,
     // ScheduleModule.forRoot(),
     // SchedulerModule
+    ScheduledPostModule,
   ],
   controllers: [AppController],
   providers: [AppService],
