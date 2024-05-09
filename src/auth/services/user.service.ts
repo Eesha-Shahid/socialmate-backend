@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../schemas/user.schema';
@@ -7,6 +7,8 @@ import { GenerateCaptionDto } from '../dto/generateCaption.dto';
 import { HttpService } from '@nestjs/axios';
 import { ScheduledPostService } from 'src/scheduledPost/services/scheduled-post.service';
 import { UpdateScheduledPostDto } from 'src/scheduledPost/dto/update-scheduled-post.dto';
+import { InfluencerService } from 'src/influencer/services/influencer.service';
+import { InfluencerDto } from '../dto/toggle-influencer.dto';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -16,6 +18,7 @@ export class UserService {
     private userModel: Model<User>,
     private readonly httpService: HttpService,
     private readonly scheduledPostService: ScheduledPostService,
+    private readonly influencerService: InfluencerService,
   ) {}
 
   async getProfile(userId: string): Promise<any> {
@@ -384,7 +387,39 @@ export class UserService {
     return data[0];
   }
 
-  // async getInstagramScheduledPosts(userId: string): Promise<any> {}
+  async getInfluencers(): Promise<any> {
+    return await this.influencerService.getInfluencers();
+  }
+
+  async getUserInfluencers(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $unwind: '$influencers',
+      },
+      {
+        $lookup: {
+          from: 'influencers',
+          localField: 'influencers',
+          foreignField: '_id',
+          as: 'result',
+        },
+      },
+      {
+        $unwind: '$result',
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$result',
+        },
+      },
+    ]);
+    return data;
+  }
 
   async getScheduledPosts(userId: string): Promise<any> {
     const data = await this.userModel.aggregate([
@@ -437,6 +472,51 @@ export class UserService {
       post: res.post,
       message: res.message || 'Post updated successfully!',
     };
+  }
+
+  async addInfluencer(
+    userId: string,
+    influencerDto: InfluencerDto,
+  ): Promise<any> {
+    try {
+      const { influencer_id } = influencerDto;
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      if (!user.influencers) {
+        user.influencers = [];
+      }
+      user.influencers.push(new ObjectId(influencer_id));
+      await user.save();
+      return { user: user, message: 'Influencer added successfully' };
+    } catch (error) {
+      return { user: null, message: error.message };
+    }
+  }
+
+  async removeInfluencer(
+    userId: string,
+    influencerDto: InfluencerDto,
+  ): Promise<any> {
+    try {
+      const { influencer_id } = influencerDto;
+      const user = await this.userModel.findById(userId);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      if (user.influencers.length > 0) {
+        user.influencers = user.influencers.filter((item) => {
+          return !item.equals(new ObjectId(influencer_id));
+        });
+      }
+      await user.save();
+      return { user: user, message: 'Influencer removed successfully' };
+    } catch (error) {
+      return { user: null, message: error.message };
+    }
   }
 
   async getPaymentMethods(userId: string): Promise<any> {
@@ -585,11 +665,184 @@ export class UserService {
           },
         )
         .toPromise();
-
-      return res.data; // Assuming that the response contains a 'data' field
+      return { suggestions: res.data.suggestions };
     } catch (error) {
-      console.error('Error generating caption:', error);
-      throw new InternalServerErrorException('Failed to generate caption');
+      return { error: error };
     }
+  }
+
+  async getInstagramIntegrationDetail(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $unwind: '$access_token',
+      },
+      {
+        $project: {
+          access_token: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: 'instagram_user',
+          let: { token: '$access_token.token' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$token'] },
+              },
+            },
+            {
+              $project: {
+                name: 1,
+                username: 1,
+                profile_picture_url: 1,
+              },
+            },
+          ],
+          as: 'user_details',
+        },
+      },
+      {
+        $unwind: '$user_details',
+      },
+      {
+        $project: {
+          _id: 0,
+          platform: '$access_token.platform',
+          name: '$user_details.name',
+          username: '$user_details.username',
+          profile_picture_url: '$user_details.profile_picture_url',
+          login_time: '$access_token.login_time',
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async getFacebookIntegrationDetail(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $unwind: '$access_token',
+      },
+      {
+        $project: {
+          access_token: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: 'facebook_user',
+          let: { token: '$access_token.token' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$token'] },
+              },
+            },
+            {
+              $project: {
+                name: 1,
+                username: 1,
+                profile_picture_url: 1,
+              },
+            },
+          ],
+          as: 'user_details',
+        },
+      },
+      {
+        $unwind: '$user_details',
+      },
+      {
+        $project: {
+          _id: 0,
+          platform: '$access_token.platform',
+          name: '$user_details.name',
+          username: '$user_details.username',
+          profile_picture_url: '$user_details.profile_picture_url',
+          login_time: '$access_token.login_time',
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async getRedditIntegrationDetail(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $unwind: '$access_token',
+      },
+      {
+        $project: {
+          access_token: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: 'reddit_user',
+          let: { token: '$access_token.token' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$_id', '$$token'] },
+              },
+            },
+            {
+              $project: {
+                name: 1,
+                username: 1,
+                profile_picture_url: 1,
+              },
+            },
+          ],
+          as: 'user_details',
+        },
+      },
+      {
+        $unwind: '$user_details',
+      },
+      {
+        $project: {
+          _id: 0,
+          platform: '$access_token.platform',
+          name: '$user_details.name',
+          username: '$user_details.username',
+          profile_picture_url: '$user_details.profile_picture_url',
+          login_time: '$access_token.login_time',
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async getIntegrationDetail(userId: string): Promise<any> {
+    const [instagram_user, facebook_user, reddit_user] = await Promise.all([
+      this.getInstagramIntegrationDetail(userId),
+      this.getFacebookIntegrationDetail(userId),
+      this.getRedditIntegrationDetail(userId),
+    ]);
+
+    const user_integration_details = [
+      instagram_user,
+      facebook_user,
+      reddit_user,
+    ].filter(Boolean);
+
+    return user_integration_details;
   }
 }

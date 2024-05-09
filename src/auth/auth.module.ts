@@ -27,6 +27,7 @@ import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
 import { HttpModule } from '@nestjs/axios';
 import { ScheduledPostModule } from 'src/scheduledPost/scheduled-post.module';
+import { InfluencerModule } from 'src/influencer/influencer.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ScheduledPostModule } from 'src/scheduledPost/scheduled-post.module';
     HttpModule,
     forwardRef(() => SchedulerModule),
     ScheduledPostModule,
+    InfluencerModule,
   ],
   controllers: [
     AuthController,

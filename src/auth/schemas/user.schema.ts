@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { UserType, SocialMediaPlatform } from '../../common/enums/index';
+import { Types } from 'mongoose';
+
 @Schema({ timestamps: true })
 export class User {
   [x: string]: any;
@@ -47,6 +49,9 @@ export class User {
 
   @Prop({ default: false })
   two_factor: boolean;
+
+  @Prop({ type: [{ type: Types.ObjectId }], default: [] })
+  influencers: Types.ObjectId[];
 
   @Prop({
     type: {

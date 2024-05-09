@@ -9,6 +9,7 @@ import { Roles } from '../roles.decorator';
 import { UserType } from '../../common/enums/index';
 import { GenerateCaptionDto } from '../dto/generateCaption.dto';
 import { UpdateScheduledPostDto } from 'src/scheduledPost/dto/update-scheduled-post.dto';
+import { InfluencerDto } from '../dto/toggle-influencer.dto';
 
 @Controller('user')
 @UseGuards(RolesAuthGuard)
@@ -72,6 +73,30 @@ export class UserController {
     return await this.userService.updateScheduledPost(updateScheduledPostDto);
   }
 
+  @Get('influencers')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getInfluencers(@Req() req) {
+    return await this.userService.getInfluencers();
+  }
+
+  @Get('influencer-list')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getUserInfluencers(@Req() req) {
+    return await this.userService.getUserInfluencers(req.user.id);
+  }
+
+  @Post('influencer-list/add')
+  @Roles(UserType.Standard, UserType.Premium)
+  async addInfluencer(@Req() req, @Body() influencerDto: InfluencerDto) {
+    return await this.userService.addInfluencer(req.user.id, influencerDto);
+  }
+
+  @Post('influencer-list/remove')
+  @Roles(UserType.Standard, UserType.Premium)
+  async removeInfluencer(@Req() req, @Body() influencerDto: InfluencerDto) {
+    return await this.userService.removeInfluencer(req.user.id, influencerDto);
+  }
+
   @Get('payment-methods')
   @Roles(UserType.Standard, UserType.Premium)
   async getPaymentMethods(@Req() req) {
@@ -87,9 +112,16 @@ export class UserController {
   @Post('generate-caption')
   @Roles(UserType.Standard, UserType.Premium)
   async createProject(
+    @Req() Req,
     @Body() generateCaptionDto: GenerateCaptionDto,
   ): Promise<any> {
     const data = this.userService.generateCaption(generateCaptionDto);
     return data;
+  }
+
+  @Get('integrations')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getIntegrationDetail(@Req() req): Promise<any> {
+    return await this.userService.getIntegrationDetail(req.user.id);
   }
 }

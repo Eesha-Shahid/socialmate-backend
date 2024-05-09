@@ -13,6 +13,7 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
 import { MailModule } from './mail/mail.module';
 // import { CardModule } from './card/card.module';
 import { ScheduledPostModule } from './scheduledPost/scheduled-post.module';
+import { InfluencerModule } from './influencer/influencer.module';
 // import { ScheduleModule } from '@nestjs/schedule';
 // import { SchedulerModule } from './scheduler/scheduler.module';
 
@@ -30,6 +31,7 @@ import { ScheduledPostModule } from './scheduledPost/scheduled-post.module';
     // ScheduleModule.forRoot(),
     // SchedulerModule
     ScheduledPostModule,
+    InfluencerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
