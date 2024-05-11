@@ -21,6 +21,9 @@ export class UpdateScheduledPostDto {
   @IsOptional()
   hashtags?: string[];
 
+  @IsOptional()
+  tagged_accounts?: string[];
+
   @IsDate()
   @IsOptional()
   scheduled_time?: Date;

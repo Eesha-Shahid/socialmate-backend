@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../schemas/user.schema';
@@ -9,6 +9,13 @@ import { ScheduledPostService } from 'src/scheduledPost/services/scheduled-post.
 import { UpdateScheduledPostDto } from 'src/scheduledPost/dto/update-scheduled-post.dto';
 import { InfluencerService } from 'src/influencer/services/influencer.service';
 import { InfluencerDto } from '../dto/toggle-influencer.dto';
+import { AddCardDto } from 'src/card/dto/add-card.dto';
+import { CardService } from 'src/card/services/card.service';
+import { SubscriptionStatus, UserType } from 'src/common/enums';
+import { StripeService } from 'src/payments/services/stripe.service';
+import { UpdateCardDto } from 'src/card/dto/update-card.dto';
+import { AddScheduledPostDto } from 'src/scheduledPost/dto/add-scheduled-post.dto';
+import { CloudinaryService } from 'src/cloudinary/services/cloudinary.service';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -19,10 +26,117 @@ export class UserService {
     private readonly httpService: HttpService,
     private readonly scheduledPostService: ScheduledPostService,
     private readonly influencerService: InfluencerService,
+    private readonly cardService: CardService,
+    private readonly cloudinaryService: CloudinaryService,
+
+    @Inject(forwardRef(() => StripeService))
+    private readonly stripeService: StripeService,
   ) {}
 
   async getProfile(userId: string): Promise<any> {
     return await this.userModel.findById(userId);
+  }
+
+  async getDefaultCard(userId: string): Promise<any> {
+    const data = await this.userModel.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'cards',
+          localField: '_id',
+          foreignField: 'user_id',
+          as: 'cards',
+        },
+      },
+      {
+        $unwind: '$cards',
+      },
+      {
+        $match: {
+          'cards.default': true,
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$cards',
+        },
+      },
+    ]);
+    return data[0];
+  }
+
+  async setDefaultCard(userId: string, updateCardDto: UpdateCardDto) {
+    try {
+      const { cardId } = updateCardDto;
+      const defaultCard = await this.getDefaultCard(userId);
+      const defaultCardId = String(defaultCard._id);
+      await this.cardService.updateCard(defaultCardId, false);
+      const card = await this.cardService.updateCard(cardId, true);
+      return { card: card, message: 'Card is set to default' };
+    } catch (error) {
+      return { card: null, message: error };
+    }
+  }
+
+  async addCard(userId: string, addCardDto: AddCardDto): Promise<any> {
+    try {
+      const defaultCard = await this.getDefaultCard(userId);
+      const isDefault = defaultCard ? false : true;
+      const res = await this.cardService.addCard({
+        ...addCardDto,
+        user_id: new ObjectId(userId),
+        default: isDefault,
+      });
+      return { card: res, message: 'Card Added Successfully' };
+    } catch (error) {
+      return { card: null, message: 'Error adding Card' };
+    }
+  }
+
+  async subscribe(userId: string) {
+    const user = await this.userModel.findById(userId);
+    const customerId = user.stripe_customer_id;
+    const defaultCard = await this.getDefaultCard(userId);
+
+    if (!defaultCard) {
+      console.error('SUBSCRIBE.NO_CARD_FOUND');
+      return null;
+    }
+
+    const clientSecret =
+      await this.stripeService.createPaymentIntent(customerId);
+    const paymentIntent =
+      await this.stripeService.confirmCardPayment(clientSecret);
+
+    const currentDate = new Date();
+    const expirationDate = new Date(currentDate);
+    expirationDate.setMonth(currentDate.getMonth() + 1);
+
+    const savePaymentDto = {
+      status: SubscriptionStatus.Active,
+      amount: paymentIntent.amount,
+      expiration_date: expirationDate,
+      card_id: defaultCard._id,
+      user_id: user._id,
+    };
+
+    try {
+      await this.userModel.findByIdAndUpdate(
+        userId,
+        {
+          $set: { user_type: UserType.Premium },
+        },
+        { new: true },
+      );
+      return await this.stripeService.savePayment(savePaymentDto);
+    } catch (error) {
+      console.error('SUBSCRIBE.', error);
+      return null;
+    }
   }
 
   async getInstagramAccountDetails(userId: string): Promise<any> {
@@ -462,6 +576,79 @@ export class UserService {
     return data[0];
   }
 
+  async createScheduledPost(
+    userId: string,
+    file: Express.Multer.File,
+    addScheduledPostDto: AddScheduledPostDto,
+  ): Promise<any> {
+    const cloudinaryResponse = await this.cloudinaryService.uploadFile(
+      file,
+      'post-media',
+    );
+    const imageUrl = cloudinaryResponse.secure_url;
+    const res = await this.scheduledPostService.createScheduledPost({
+      ...addScheduledPostDto,
+      user_id: new ObjectId(userId),
+      media: [imageUrl],
+    });
+    return {
+      post: res,
+      message: res.message || 'Post added successfully!',
+    };
+  }
+
+  async createPost(
+    file: Express.Multer.File,
+    addScheduledPostDto: AddScheduledPostDto,
+  ): Promise<any> {
+    const cloudinaryResponse = await this.cloudinaryService.uploadFile(
+      file,
+      'published-post-media',
+    );
+    const imageUrl = cloudinaryResponse.secure_url;
+
+    try {
+      const res = await this.httpService
+        .post(
+          `${process.env.MODEL_API}/publish-image`,
+          {
+            image_url: imageUrl,
+            caption: addScheduledPostDto.caption,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        )
+        .toPromise();
+      return { message: res.data.message };
+    } catch (error) {
+      return { error: error };
+    }
+  }
+
+  async calculateSentiment(caption: string): Promise<any> {
+    try {
+      const res = await this.httpService
+        .post(
+          `${process.env.MODEL_API}/calculate-sentiment`,
+          {
+            caption: caption,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        )
+        .toPromise();
+      return { sentiment: res.data.sentiment };
+    } catch (error) {
+      return { error: error };
+    }
+  }
+
   async updateScheduledPost(
     updateScheduledPostDto: UpdateScheduledPostDto,
   ): Promise<any> {
@@ -540,7 +727,7 @@ export class UserService {
             },
             {
               $project: {
-                _id: 0,
+                _id: 1,
                 user_id: 0,
               },
             },
@@ -666,6 +853,29 @@ export class UserService {
         )
         .toPromise();
       return { suggestions: res.data.suggestions };
+    } catch (error) {
+      return { error: error };
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async generateCaptionFromImage(file: Express.Multer.File): Promise<any> {
+    try {
+      console.log('Called');
+      const res = await this.httpService
+        .post(
+          `${process.env.MODEL_API}/generate-caption-from-image`,
+          {
+            data: null,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        )
+        .toPromise();
+      return { caption: res.data.caption };
     } catch (error) {
       return { error: error };
     }

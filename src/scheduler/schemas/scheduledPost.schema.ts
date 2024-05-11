@@ -1,29 +1,28 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { RedditPost } from "src/scheduler/schemas/redditPost.schema";
-import { User } from "src/auth/schemas/user.schema";
-import { SchemaTypes } from "mongoose";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { RedditPost } from 'src/scheduler/schemas/redditPost.schema';
+import { SchemaTypes } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class ScheduledPost {
-    [x: string]: any;
+  [x: string]: any;
 
-    @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
-    user: string;
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
+  user: string;
 
-    @Prop()
-    facebookPost?: RedditPost;
+  @Prop()
+  facebookPost?: RedditPost;
 
-    @Prop()
-    InstagramPost?: RedditPost;
+  @Prop()
+  InstagramPost?: RedditPost;
 
-    @Prop()
-    twitterPost?: RedditPost;
+  @Prop()
+  twitterPost?: RedditPost;
 
-    @Prop()
-    redditPost?: RedditPost;  
+  @Prop()
+  redditPost?: RedditPost;
 
-    @Prop()
-    scheduledTime: Date;
+  @Prop()
+  scheduledTime: Date;
 }
 
 export const ScheduledPostSchema = SchemaFactory.createForClass(ScheduledPost);

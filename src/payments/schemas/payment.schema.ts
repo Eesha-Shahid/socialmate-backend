@@ -1,14 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { User } from 'src/auth/schemas/user.schema';
-import { Card } from 'src/card/schemas/card.schema';
-import { CardStatus } from '../../common/enums/index';
+import { Types } from 'mongoose';
+import { SubscriptionStatus } from 'src/common/enums';
 
 @Schema({ timestamps: true })
 export class Payment {
   [x: string]: any;
 
   @Prop()
-  status: CardStatus;
+  status: SubscriptionStatus;
 
   @Prop()
   amount: number;
@@ -16,11 +15,11 @@ export class Payment {
   @Prop()
   expiration_date: Date;
 
-  @Prop()
-  card_id: Card;
+  @Prop({ type: Types.ObjectId })
+  card_id: Types.ObjectId;
 
-  @Prop()
-  user_id: User;
+  @Prop({ type: Types.ObjectId })
+  user_id: Types.ObjectId;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);

@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 
 // Services
 import { UserService } from '../services/user.service';
@@ -10,6 +19,10 @@ import { UserType } from '../../common/enums/index';
 import { GenerateCaptionDto } from '../dto/generateCaption.dto';
 import { UpdateScheduledPostDto } from 'src/scheduledPost/dto/update-scheduled-post.dto';
 import { InfluencerDto } from '../dto/toggle-influencer.dto';
+import { AddCardDto } from 'src/card/dto/add-card.dto';
+import { UpdateCardDto } from 'src/card/dto/update-card.dto';
+import { AddScheduledPostDto } from 'src/scheduledPost/dto/add-scheduled-post.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('user')
 @UseGuards(RolesAuthGuard)
@@ -20,6 +33,25 @@ export class UserController {
   @Roles(UserType.Standard, UserType.Premium)
   async getProfile(@Req() req) {
     return await this.userService.getProfile(req.user.id);
+  }
+
+  @Post('add-card')
+  @Roles(UserType.Standard, UserType.Premium)
+  async addCard(@Req() req, @Body() addCardDto: AddCardDto) {
+    console.log(addCardDto);
+    return await this.userService.addCard(req.user.id, addCardDto);
+  }
+
+  @Post('subscribe')
+  @Roles(UserType.Standard, UserType.Premium)
+  async subscribe(@Req() req) {
+    return await this.userService.subscribe(req.user.id);
+  }
+
+  @Post('set-default-card')
+  @Roles(UserType.Standard, UserType.Premium)
+  async setDefaultCard(@Req() req, @Body() updateCardDto: UpdateCardDto) {
+    return this.userService.setDefaultCard(req.user.id, updateCardDto);
   }
 
   @Get('account-details/instagram')
@@ -73,8 +105,41 @@ export class UserController {
     return await this.userService.updateScheduledPost(updateScheduledPostDto);
   }
 
+  @Post('add-scheduled-post')
+  @Roles(UserType.Standard, UserType.Premium)
+  @UseInterceptors(FileInterceptor('file'))
+  async createScheduledPost(
+    @Req() req,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('addScheduledPostDto') addScheduledPostDtoJson: string,
+  ) {
+    const addScheduledPostDtoParsed: AddScheduledPostDto = JSON.parse(
+      addScheduledPostDtoJson,
+    ); // Parse JSON string
+    return await this.userService.createScheduledPost(
+      req.user.id,
+      file,
+      addScheduledPostDtoParsed,
+    );
+  }
+
+  @Post('create-post')
+  @Roles(UserType.Standard, UserType.Premium)
+  @UseInterceptors(FileInterceptor('file'))
+  async createPost(
+    @Req() req,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('addScheduledPostDto') addScheduledPostDtoJson: string,
+  ) {
+    const addScheduledPostDtoParsed: AddScheduledPostDto = JSON.parse(
+      addScheduledPostDtoJson,
+    );
+    return await this.userService.createPost(file, addScheduledPostDtoParsed);
+  }
+
   @Get('influencers')
   @Roles(UserType.Standard, UserType.Premium)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getInfluencers(@Req() req) {
     return await this.userService.getInfluencers();
   }
@@ -111,11 +176,30 @@ export class UserController {
 
   @Post('generate-caption')
   @Roles(UserType.Standard, UserType.Premium)
-  async createProject(
+  async generateCaption(
     @Req() Req,
     @Body() generateCaptionDto: GenerateCaptionDto,
   ): Promise<any> {
     const data = this.userService.generateCaption(generateCaptionDto);
+    return data;
+  }
+
+  @Post('generate-caption-from-image')
+  @Roles(UserType.Standard, UserType.Premium)
+  @UseInterceptors(FileInterceptor('file'))
+  async generateCaptionFromImage(
+    @Req() Req,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<any> {
+    const data = this.userService.generateCaptionFromImage(file);
+    return data;
+  }
+
+  @Post('calculate-sentiment')
+  @Roles(UserType.Standard, UserType.Premium)
+  async calculateSentiment(@Req() Req, @Body() captionDto: any): Promise<any> {
+    const { caption } = captionDto;
+    const data = this.userService.calculateSentiment(caption);
     return data;
   }
 

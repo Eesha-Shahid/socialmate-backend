@@ -8,34 +8,30 @@ import { SignUpDto } from '../dto/signup.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../schemas/user.schema';
-
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from '../dto/login.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UpdateUsernameDto } from '../dto/update-username.dto';
-import { StripeService } from '../../payments/services/stripe.service';
 import { MailService } from 'src/mail/services/mail.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { EmailDto } from '../dto/email.dto';
 import { DeleteCardDto } from 'src/card/dto/delete-card.dto';
 import { Card } from 'src/card/schemas/card.schema';
-import { SavePaymentDto } from 'src/payments/dto/save-payment.dto';
-import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 import { UserType } from '../../common/enums/index';
 import { Payment } from 'src/payments/schemas/payment.schema';
 import { randomBytes } from 'crypto';
+import { StripeService } from 'src/payments/services/stripe.service';
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(forwardRef(() => StripeService))
-    private readonly stripeService: StripeService,
-
     private mailService: MailService,
-
     @InjectModel(User.name)
     private userModel: Model<User>,
     private jwtService: JwtService,
+
+    @Inject(forwardRef(() => StripeService))
+    private readonly stripeService: StripeService,
   ) {}
 
   // Signup
@@ -242,40 +238,6 @@ export class AuthService {
     }
   }
 
-  async addCard(userId: string, addCardDto): Promise<User | null> {
-    try {
-      // const iv = randomBytes(16);
-      // const password = 'socialmate14';
-      // const key = (await promisify(scrypt)(password, 'salt', 32)) as Buffer;
-      // const cipher = createCipheriv('aes-256-ctr', key, iv);
-      // const encryptedCardNumber = Buffer.concat([
-      //   cipher.update(addCardDto.cardNumber),
-      //   cipher.final(),
-      // ]);
-
-      const user = await this.userModel.findById(userId);
-      const isDefault = user.cards.length === 0;
-
-      const updatedUser = await this.userModel.findByIdAndUpdate(
-        userId,
-        {
-          $push: {
-            cards: {
-              ...addCardDto,
-              card_number: addCardDto.card_number,
-              default: isDefault,
-            },
-          },
-        },
-        { new: true },
-      );
-      return updatedUser;
-    } catch (error) {
-      console.error('ADD_CARD.', error);
-      return null;
-    }
-  }
-
   async deleteCard(
     userId: string,
     deleteCardDto: DeleteCardDto,
@@ -295,94 +257,30 @@ export class AuthService {
     }
   }
 
-  async setDefaultCard(
-    userId: string,
-    updateCardDto: UpdateCardDto,
-  ): Promise<User | null> {
-    try {
-      const { cardId } = updateCardDto;
+  // async setDefaultCard(
+  //   userId: string,
+  //   updateCardDto: UpdateCardDto,
+  // ): Promise<User | null> {
+  //   try {
+  //     const { cardId } = updateCardDto;
 
-      await this.userModel.updateOne(
-        { _id: userId },
-        { $set: { 'cards.$[].default': false } },
-      );
+  //     await this.userModel.updateOne(
+  //       { _id: userId },
+  //       { $set: { 'cards.$[].default': false } },
+  //     );
 
-      const updatedUser = await this.userModel.findOneAndUpdate(
-        { _id: userId, 'cards._id': cardId },
-        { $set: { 'cards.$.default': true } },
-        { new: true },
-      );
+  //     const updatedUser = await this.userModel.findOneAndUpdate(
+  //       { _id: userId, 'cards._id': cardId },
+  //       { $set: { 'cards.$.default': true } },
+  //       { new: true },
+  //     );
 
-      return updatedUser;
-    } catch (error) {
-      console.error('SET_DEFAULT_CARD.', error);
-      return null;
-    }
-  }
-
-  async getDefaultCardId(userId: string): Promise<Card> {
-    try {
-      const user = await this.userModel.findById(userId);
-      if (!user) {
-        console.error('GET_DEFAULT_CARD_ID.USER_NOT_FOUND');
-        return null;
-      }
-
-      const defaultCard = user.cards.find((card) => card.default);
-      if (!defaultCard) {
-        console.error('GET_DEFAULT_CARD_ID.DEFAULT_CARD_NOT_FOUND');
-        return null;
-      }
-
-      return defaultCard;
-    } catch (error) {
-      console.error('GET_DEFAULT_CARD_ID.', error);
-      return null;
-    }
-  }
-
-  async subscribe(userId: string, customerId: string) {
-    const user = await this.userModel.findById(userId);
-    if (user.user_type === UserType.Premium) {
-      console.error('SUBSCRIBE.ALREADY_PREMIUM_USER');
-      return null;
-    }
-
-    const defaultCard = await this.getDefaultCardId(userId);
-
-    if (!defaultCard) {
-      console.error('SUBSCRIBE.DEFAULT_CARD_NOT_FOUND');
-      return null;
-    }
-
-    const clientSecret =
-      await this.stripeService.createPaymentIntent(customerId);
-    const paymentIntent =
-      await this.stripeService.confirmCardPayment(clientSecret);
-    const savePaymentDto = new SavePaymentDto();
-    savePaymentDto.card = defaultCard.card_number;
-    savePaymentDto.amount = paymentIntent.amount;
-    savePaymentDto.currency = paymentIntent.currency;
-    savePaymentDto.payment_method = 'Card';
-
-    try {
-      const user = await this.userModel.findOne({
-        stripe_customer_id: customerId,
-      });
-      const updatedUser = await this.userModel.findByIdAndUpdate(
-        user.id,
-        {
-          $push: { payments: { ...savePaymentDto } },
-          $set: { user_type: UserType.Premium }, // Set user type to premium
-        },
-        { new: true },
-      );
-      return updatedUser;
-    } catch (error) {
-      console.error('SUBSCRIBE.', error);
-      return null;
-    }
-  }
+  //     return updatedUser;
+  //   } catch (error) {
+  //     console.error('SET_DEFAULT_CARD.', error);
+  //     return null;
+  //   }
+  // }
 
   async getPayments(userId: string): Promise<Payment[] | null> {
     try {

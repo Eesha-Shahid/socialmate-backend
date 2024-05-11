@@ -21,13 +21,13 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
 import { RedditController } from './controllers/reddit.controller';
 import { RedditService } from './services/reddit.service';
 import { MailModule } from 'src/mail/mail.module';
-// import { CardModule } from 'src/card/card.module';
 import { SchedulerModule } from 'src/scheduler/scheduler.module';
 import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
 import { HttpModule } from '@nestjs/axios';
 import { ScheduledPostModule } from 'src/scheduledPost/scheduled-post.module';
 import { InfluencerModule } from 'src/influencer/influencer.module';
+import { CardModule } from 'src/card/card.module';
 
 @Module({
   imports: [
@@ -45,7 +45,7 @@ import { InfluencerModule } from 'src/influencer/influencer.module';
     CloudinaryModule,
     NestjsFormDataModule,
     MailModule,
-    // CardModule,
+    CardModule,
     HttpModule,
     forwardRef(() => SchedulerModule),
     ScheduledPostModule,

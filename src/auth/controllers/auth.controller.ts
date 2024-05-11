@@ -23,12 +23,10 @@ import { RolesAuthGuard } from '../roles-auth.guard';
 import { User } from '../schemas/user.schema';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { EmailDto } from '../dto/email.dto';
-import { AddCardDto } from 'src/card/dto/add-card.dto';
 import { DeleteCardDto } from 'src/card/dto/delete-card.dto';
 import { OAuth2Client } from 'google-auth-library';
 import { Roles } from '../roles.decorator';
 import { UserType } from '../../common/enums/index';
-import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -125,43 +123,10 @@ export class AuthController {
     return { message: 'Account deleted successfully' };
   }
 
-  @Patch('add-card')
-  @Roles(UserType.Standard, UserType.Premium)
-  async addCard(@Req() req, @Body() addCardDto: AddCardDto) {
-    return await this.authService.addCard(req.user.id, addCardDto);
-  }
-
   @Patch('delete-card')
   @Roles(UserType.Standard, UserType.Premium)
   async deleteCard(@Req() req, @Body() deleteCardDto: DeleteCardDto) {
     return await this.authService.deleteCard(req.user.id, deleteCardDto);
-  }
-
-  @Patch('set-default-card')
-  @Roles(UserType.Standard, UserType.Premium)
-  async setDefaultCard(@Req() req, @Body() updateCardDto: UpdateCardDto) {
-    return this.authService.setDefaultCard(req.user.id, updateCardDto);
-  }
-
-  @Get('cards')
-  @Roles(UserType.Standard, UserType.Premium)
-  async fetchCards(@Req() req) {
-    return await this.authService.viewCards(req.user.id);
-  }
-
-  @Patch('subscribe')
-  @Roles(UserType.Standard, UserType.Premium)
-  async subscribe(@Req() req) {
-    return await this.authService.subscribe(
-      req.user.id,
-      req.user.stripe_customer_id,
-    );
-  }
-
-  @Get('payments')
-  @Roles(UserType.Standard, UserType.Premium)
-  async getPayments(@Req() req) {
-    return this.authService.getPayments(req.user.id);
   }
 
   @Patch('unsubscribe')

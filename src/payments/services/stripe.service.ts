@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CredentialsDto } from '../../auth/dto/credentials.dto';
 import Stripe from 'stripe';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Payment } from '../schemas/payment.schema';
-import { CreatePaymentDto } from '../dto/create-payment.dto';
-import { User } from '../../auth/schemas/user.schema';
 import { SavePaymentDto } from '../dto/save-payment.dto';
 
 @Injectable()
@@ -30,46 +27,46 @@ export class StripeService {
   }
 
   // Used for adding a card
-  async createToken(credentials: CredentialsDto) {
-    return await this.stripe.tokens.create({
-      // @ts-ignore
-      card: {
-        number: credentials.number,
-        exp_month: credentials.exp_month,
-        exp_year: credentials.exp_year,
-      },
-    });
-  }
+  // async createToken(credentials: CredentialsDto) {
+  //   return await this.stripe.tokens.create({
+  //     // @ts-ignore
+  //     card: {
+  //       number: credentials.number,
+  //       exp_month: credentials.exp_month,
+  //       exp_year: credentials.exp_year,
+  //     },
+  //   });
+  // }
 
-  async createPaymentMethod(tokenId: string) {
-    return await this.stripe.paymentMethods.create({
-      type: 'card',
-      card: {
-        token: tokenId,
-      },
-    });
-  }
+  // async createPaymentMethod(tokenId: string) {
+  //   return await this.stripe.paymentMethods.create({
+  //     type: 'card',
+  //     card: {
+  //       token: tokenId,
+  //     },
+  //   });
+  // }
 
-  async attachPaymentMethod(methodId: string, customerId: string) {
-    return await this.stripe.paymentMethods.attach(methodId, {
-      customer: customerId,
-    });
-  }
+  // async attachPaymentMethod(methodId: string, customerId: string) {
+  //   return await this.stripe.paymentMethods.attach(methodId, {
+  //     customer: customerId,
+  //   });
+  // }
 
-  // Used for deleting card
-  async detachPaymentMethod(methodId: string) {
-    return await this.stripe.paymentMethods.detach(methodId);
-  }
+  // // Used for deleting card
+  // async detachPaymentMethod(methodId: string) {
+  //   return await this.stripe.paymentMethods.detach(methodId);
+  // }
 
-  async create(
-    createPaymentDto: CreatePaymentDto,
-    user: User,
-  ): Promise<Payment> {
-    const data = Object.assign(createPaymentDto, { user: user._id });
-    const res = await this.paymentModel.create(data);
+  // async create(
+  //   createPaymentDto: CreatePaymentDto,
+  //   user: User,
+  // ): Promise<Payment> {
+  //   const data = Object.assign(createPaymentDto, { user: user._id });
+  //   const res = await this.paymentModel.create(data);
 
-    return res;
-  }
+  //   return res;
+  // }
 
   async createPaymentIntent(cusomterID: string) {
     const paymentIntent = await this.stripe.paymentIntents.create({
@@ -93,11 +90,6 @@ export class StripeService {
       },
     );
     return paymentIntent;
-  }
-
-  async deleteMany(user: User) {
-    await this.paymentModel.deleteMany({ user: user._id._id.toString() });
-    return { message: 'Payment Deleted' };
   }
 
   async savePayment(savePaymentDto: SavePaymentDto): Promise<Payment | null> {

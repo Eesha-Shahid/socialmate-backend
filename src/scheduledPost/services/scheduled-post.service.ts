@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { ScheduledPost } from '../schemas/scheduled-post.schema';
 import { UpdateScheduledPostDto } from '../dto/update-scheduled-post.dto';
 import * as mongoose from 'mongoose';
+import { AddScheduledPostDto } from '../dto/add-scheduled-post.dto';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -15,6 +16,12 @@ export class ScheduledPostService {
 
   async getScheduledPost(postId: string): Promise<any> {
     return await this.scheduledPostModel.findById(postId);
+  }
+
+  async createScheduledPost(
+    addScheduledPostDto: AddScheduledPostDto,
+  ): Promise<any> {
+    return await this.scheduledPostModel.create(addScheduledPostDto);
   }
 
   async updateScheduledPost(

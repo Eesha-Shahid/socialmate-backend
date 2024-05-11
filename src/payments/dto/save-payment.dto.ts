@@ -1,16 +1,19 @@
-import { IsNotEmpty } from "class-validator";
-
+import { IsNotEmpty } from 'class-validator';
+import { Types } from 'mongoose';
+import { SubscriptionStatus } from 'src/common/enums';
 export class SavePaymentDto {
-    
-    @IsNotEmpty()
-    card: String
+  @IsNotEmpty()
+  status: SubscriptionStatus;
 
-    @IsNotEmpty()
-    amount: Number
+  @IsNotEmpty()
+  amount: number;
 
-    @IsNotEmpty()
-    currency: String
+  @IsNotEmpty()
+  expiration_date: Date;
 
-    @IsNotEmpty()
-    payment_method: String
+  @IsNotEmpty()
+  card_id: Types.ObjectId;
+
+  @IsNotEmpty()
+  user_id: Types.ObjectId;
 }

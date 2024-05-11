@@ -1,4 +1,4 @@
-export enum CardStatus {
+export enum SubscriptionStatus {
   Active = 'Active',
   Inactive = 'Inactive',
 }
