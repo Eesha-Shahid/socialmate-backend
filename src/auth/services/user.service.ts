@@ -16,6 +16,7 @@ import { StripeService } from 'src/payments/services/stripe.service';
 import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 import { AddScheduledPostDto } from 'src/scheduledPost/dto/add-scheduled-post.dto';
 import { CloudinaryService } from 'src/cloudinary/services/cloudinary.service';
+import { AdService } from 'src/ads/services/ads.service';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -26,6 +27,7 @@ export class UserService {
     private readonly httpService: HttpService,
     private readonly scheduledPostService: ScheduledPostService,
     private readonly influencerService: InfluencerService,
+    private readonly adService: AdService,
     private readonly cardService: CardService,
     private readonly cloudinaryService: CloudinaryService,
 
@@ -503,6 +505,10 @@ export class UserService {
 
   async getInfluencers(): Promise<any> {
     return await this.influencerService.getInfluencers();
+  }
+
+  async getAds(): Promise<any> {
+    return await this.adService.getAds();
   }
 
   async getUserInfluencers(userId: string): Promise<any> {

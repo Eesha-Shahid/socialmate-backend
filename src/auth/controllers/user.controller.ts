@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Body,
   Controller,
@@ -139,9 +140,14 @@ export class UserController {
 
   @Get('influencers')
   @Roles(UserType.Standard, UserType.Premium)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getInfluencers(@Req() req) {
     return await this.userService.getInfluencers();
+  }
+
+  @Get('ads')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getAds(@Req() req) {
+    return await this.userService.getAds();
   }
 
   @Get('influencer-list')

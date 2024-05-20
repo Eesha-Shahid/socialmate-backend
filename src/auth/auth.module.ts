@@ -28,6 +28,7 @@ import { HttpModule } from '@nestjs/axios';
 import { ScheduledPostModule } from 'src/scheduledPost/scheduled-post.module';
 import { InfluencerModule } from 'src/influencer/influencer.module';
 import { CardModule } from 'src/card/card.module';
+import { AdModule } from 'src/ads/ads.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { CardModule } from 'src/card/card.module';
     forwardRef(() => SchedulerModule),
     ScheduledPostModule,
     InfluencerModule,
+    AdModule,
   ],
   controllers: [
     AuthController,
