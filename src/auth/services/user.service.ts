@@ -17,6 +17,8 @@ import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 import { AddScheduledPostDto } from 'src/scheduledPost/dto/add-scheduled-post.dto';
 import { CloudinaryService } from 'src/cloudinary/services/cloudinary.service';
 import { AdService } from 'src/ads/services/ads.service';
+import { FeedbackService } from 'src/feedback/services/feedback.service';
+import { SubmitFeedbackDto } from '../dto/submit-feedback.dto';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -29,6 +31,7 @@ export class UserService {
     private readonly influencerService: InfluencerService,
     private readonly adService: AdService,
     private readonly cardService: CardService,
+    private readonly feedbackService: FeedbackService,
     private readonly cloudinaryService: CloudinaryService,
 
     @Inject(forwardRef(() => StripeService))
@@ -1060,5 +1063,13 @@ export class UserService {
     ].filter(Boolean);
 
     return user_integration_details;
+  }
+
+  async submitFeedback(userId: string, submitFeedbackDto: SubmitFeedbackDto) {
+    const { message } = submitFeedbackDto;
+    return await this.feedbackService.create({
+      user_id: userId,
+      message: message,
+    });
   }
 }

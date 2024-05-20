@@ -24,6 +24,7 @@ import { AddCardDto } from 'src/card/dto/add-card.dto';
 import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 import { AddScheduledPostDto } from 'src/scheduledPost/dto/add-scheduled-post.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { SubmitFeedbackDto } from '../dto/submit-feedback.dto';
 
 @Controller('user')
 @UseGuards(RolesAuthGuard)
@@ -213,5 +214,17 @@ export class UserController {
   @Roles(UserType.Standard, UserType.Premium)
   async getIntegrationDetail(@Req() req): Promise<any> {
     return await this.userService.getIntegrationDetail(req.user.id);
+  }
+
+  @Post('submit/feedback')
+  @Roles(UserType.Standard, UserType.Premium)
+  async submitFeedback(
+    @Req() req,
+    @Body() submitFeedbackDto: SubmitFeedbackDto,
+  ) {
+    return await this.userService.submitFeedback(
+      req.user.id,
+      submitFeedbackDto,
+    );
   }
 }

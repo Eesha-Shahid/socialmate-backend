@@ -29,6 +29,7 @@ import { ScheduledPostModule } from 'src/scheduledPost/scheduled-post.module';
 import { InfluencerModule } from 'src/influencer/influencer.module';
 import { CardModule } from 'src/card/card.module';
 import { AdModule } from 'src/ads/ads.module';
+import { FeedbackModule } from 'src/feedback/feedback.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { AdModule } from 'src/ads/ads.module';
     ScheduledPostModule,
     InfluencerModule,
     AdModule,
+    FeedbackModule,
   ],
   controllers: [
     AuthController,
