@@ -770,7 +770,12 @@ export class UserService {
       }
       user.influencers.push(new ObjectId(influencer_id));
       await user.save();
-      return { user: user, message: 'Influencer added successfully' };
+      const influencer =
+        await this.influencerService.getInfluencer(influencer_id);
+      return {
+        influencer: influencer,
+        message: 'Influencer added successfully',
+      };
     } catch (error) {
       return { user: null, message: error.message };
     }
@@ -794,7 +799,12 @@ export class UserService {
         });
       }
       await user.save();
-      return { user: user, message: 'Influencer removed successfully' };
+      const influencer =
+        await this.influencerService.getInfluencer(influencer_id);
+      return {
+        influencer: influencer,
+        message: 'Influencer removed successfully',
+      };
     } catch (error) {
       return { user: null, message: error.message };
     }

@@ -13,4 +13,8 @@ export class InfluencerService {
   async getInfluencers(): Promise<any> {
     return await this.influencerModel.find();
   }
+
+  async getInfluencer(_id: string): Promise<any> {
+    return await this.influencerModel.findById({ _id: _id });
+  }
 }
