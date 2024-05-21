@@ -112,16 +112,16 @@ export class UserController {
   @UseInterceptors(FileInterceptor('file'))
   async createScheduledPost(
     @Req() req,
-    @UploadedFile() file: Express.Multer.File,
     @Body('addScheduledPostDto') addScheduledPostDtoJson: string,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     const addScheduledPostDtoParsed: AddScheduledPostDto = JSON.parse(
       addScheduledPostDtoJson,
-    ); // Parse JSON string
+    );
     return await this.userService.createScheduledPost(
       req.user.id,
-      file,
       addScheduledPostDtoParsed,
+      file,
     );
   }
 

@@ -3,7 +3,6 @@ import { Types } from 'mongoose';
 export class AddScheduledPostDto {
   caption?: string;
   description?: string;
-  location?: string;
   subreddit?: string;
   flair_id?: string;
   flair_text?: string;

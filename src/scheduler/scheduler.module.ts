@@ -1,15 +1,11 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { AuthModule } from '../auth/auth.module';
 import { SchedulerService } from './services/scheduler.service';
-import { ScheduledPostSchema } from './schemas/scheduledPost.schema';
+import { ScheduledPostModule } from 'src/scheduledPost/scheduled-post.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports:[
-    forwardRef(() => AuthModule),
-    MongooseModule.forFeature([{ name: 'ScheduledPost', schema: ScheduledPostSchema }])
-  ],
+  imports: [forwardRef(() => AuthModule), ScheduledPostModule],
   providers: [SchedulerService],
-  exports: [SchedulerService]
+  exports: [SchedulerService],
 })
 export class SchedulerModule {}

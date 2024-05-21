@@ -14,6 +14,13 @@ export class ScheduledPostService {
     private scheduledPostModel: Model<ScheduledPost>,
   ) {}
 
+  async getScheduledPosts(): Promise<any> {
+    const currentDateTime = new Date();
+    return await this.scheduledPostModel
+      .find({ scheduled_time: { $eq: currentDateTime } })
+      .exec();
+  }
+
   async getScheduledPost(postId: string): Promise<any> {
     return await this.scheduledPostModel.findById(postId);
   }

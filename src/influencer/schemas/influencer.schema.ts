@@ -7,6 +7,9 @@ export class Influencer {
   @Prop()
   name: string;
 
+  @Prop()
+  username: string;
+
   @Prop({ type: [String], enum: Object.values(Industry) })
   industry: Industry[];
 

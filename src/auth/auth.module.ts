@@ -64,6 +64,12 @@ import { SubredditModule } from 'src/subreddit/subreddit.module';
     PhotoController,
   ],
   providers: [AuthService, UserService, RedditService, JwtStrategy],
-  exports: [AuthService, JwtStrategy, RedditService, PassportModule],
+  exports: [
+    AuthService,
+    UserService,
+    JwtStrategy,
+    RedditService,
+    PassportModule,
+  ],
 })
 export class AuthModule {}

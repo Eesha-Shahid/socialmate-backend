@@ -16,9 +16,6 @@ export class ScheduledPost {
   @Prop()
   description?: string;
 
-  @Prop()
-  location?: string;
-
   @Prop({ default: [] })
   hashtags?: string[];
 

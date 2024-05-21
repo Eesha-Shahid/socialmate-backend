@@ -589,23 +589,79 @@ export class UserService {
 
   async createScheduledPost(
     userId: string,
-    file: Express.Multer.File,
     addScheduledPostDto: AddScheduledPostDto,
+    file?: Express.Multer.File,
   ): Promise<any> {
-    const cloudinaryResponse = await this.cloudinaryService.uploadFile(
-      file,
-      'post-media',
-    );
-    const imageUrl = cloudinaryResponse.secure_url;
+    let imageUrl = null;
+    if (file) {
+      const cloudinaryResponse = await this.cloudinaryService.uploadFile(
+        file,
+        'post-media',
+      );
+      imageUrl = cloudinaryResponse.secure_url;
+    }
     const res = await this.scheduledPostService.createScheduledPost({
       ...addScheduledPostDto,
       user_id: new ObjectId(userId),
-      media: [imageUrl],
+      media: imageUrl ? [imageUrl] : null,
     });
     return {
       post: res,
       message: res.message || 'Post added successfully!',
     };
+  }
+
+  async publishScheduledPost(
+    addScheduledPostDto: AddScheduledPostDto,
+  ): Promise<any> {
+    console.log(addScheduledPostDto);
+    for (const platform of addScheduledPostDto.platform) {
+      if (platform === 'instagram') {
+        try {
+          const hashtags = addScheduledPostDto.hashtags
+            .map((tag) => `#${tag}`)
+            .join(' ');
+          await this.httpService
+            .post(
+              `${process.env.MODEL_API}/publish-image`,
+              {
+                image_url: addScheduledPostDto.media[0],
+                caption: `${addScheduledPostDto.caption} ${hashtags}`,
+                user_tags: addScheduledPostDto.tagged_accounts,
+              },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              },
+            )
+            .toPromise();
+        } catch (error) {
+          return { error: error };
+        }
+      }
+
+      if (platform === 'facebook') {
+      }
+
+      if (platform === 'reddit') {
+        try {
+          const { caption, description, subreddit, flair_id, flair_text } =
+            addScheduledPostDto;
+          await this.redditService.createPostWithText(
+            subreddit,
+            caption,
+            description,
+            flair_id,
+            flair_text,
+          );
+        } catch (error) {
+          return { error: error };
+        }
+      }
+    }
+
+    return { message: 'Posted Successfully' };
   }
 
   async createPost(
@@ -620,12 +676,16 @@ export class UserService {
             'published-post-media',
           );
           const imageUrl = cloudinaryResponse.secure_url;
+          const hashtags = addScheduledPostDto.hashtags
+            .map((tag) => `#${tag}`)
+            .join(' ');
           await this.httpService
             .post(
               `${process.env.MODEL_API}/publish-image`,
               {
                 image_url: imageUrl,
-                caption: addScheduledPostDto.caption,
+                caption: `${addScheduledPostDto.caption} ${hashtags}`,
+                user_tags: addScheduledPostDto.tagged_accounts,
               },
               {
                 headers: {
