@@ -22,6 +22,15 @@ export class ScheduledPost {
   @Prop({ default: [] })
   hashtags?: string[];
 
+  @Prop()
+  subreddit?: string;
+
+  @Prop()
+  flair_id?: string;
+
+  @Prop()
+  flair_text?: string;
+
   @Prop({ default: [] })
   tagged_accounts?: string[];
 

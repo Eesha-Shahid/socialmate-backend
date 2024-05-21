@@ -67,7 +67,7 @@ export class SchedulerService {
         try {
           if (post.redditPost.text && post.redditPost.text.trim() !== '') {
             await this.redditService.createPostWithText(
-              userData,
+              // userData,
               post.redditPost.sr,
               post.redditPost.title,
               post.redditPost.text,

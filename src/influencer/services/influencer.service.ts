@@ -7,10 +7,10 @@ import { Influencer } from '../schemas/influencer.schema';
 export class InfluencerService {
   constructor(
     @InjectModel(Influencer.name)
-    private InfluencerModel: Model<Influencer>,
+    private influencerModel: Model<Influencer>,
   ) {}
 
   async getInfluencers(): Promise<any> {
-    return await this.InfluencerModel.find();
+    return await this.influencerModel.find();
   }
 }

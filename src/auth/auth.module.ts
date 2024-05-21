@@ -30,6 +30,7 @@ import { InfluencerModule } from 'src/influencer/influencer.module';
 import { CardModule } from 'src/card/card.module';
 import { AdModule } from 'src/ads/ads.module';
 import { FeedbackModule } from 'src/feedback/feedback.module';
+import { SubredditModule } from 'src/subreddit/subreddit.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { FeedbackModule } from 'src/feedback/feedback.module';
     InfluencerModule,
     AdModule,
     FeedbackModule,
+    SubredditModule,
   ],
   controllers: [
     AuthController,

@@ -11,7 +11,6 @@ import { RolesAuthGuard } from '../roles-auth.guard';
 import { UserType } from '../../common/enums/index';
 import { Roles } from '../roles.decorator';
 import { RedditService } from '../services/reddit.service';
-import { SocialMediaCredentialsDto } from '../dto/social-media-credentials.dto';
 import { FormDataRequest } from 'nestjs-form-data';
 import { SubredditDto } from '../dto/subreddit.dto';
 import { DeleteRedditPostDto } from 'src/scheduler/dtos/delete-reddit-post.dto';
@@ -39,6 +38,12 @@ export class RedditController {
     return await this.redditService.fetchProfile(req.user);
   }
 
+  @Get('subreddits')
+  @Roles(UserType.Standard, UserType.Premium)
+  async getSubreddits(@Req() req) {
+    return await this.redditService.getSubreddits();
+  }
+
   @Post('karma')
   @Roles(UserType.Standard, UserType.Premium)
   async fetchKarma(@Req() req) {
@@ -62,7 +67,7 @@ export class RedditController {
   ): Promise<any> {
     if (body.text && body.text.trim() !== '') {
       return await this.redditService.createPostWithText(
-        req.user.id,
+        // req.user.id,
         body.sr,
         body.title,
         body.text,

@@ -19,6 +19,7 @@ import { CloudinaryService } from 'src/cloudinary/services/cloudinary.service';
 import { AdService } from 'src/ads/services/ads.service';
 import { FeedbackService } from 'src/feedback/services/feedback.service';
 import { SubmitFeedbackDto } from '../dto/submit-feedback.dto';
+import { RedditService } from './reddit.service';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -29,6 +30,7 @@ export class UserService {
     private readonly httpService: HttpService,
     private readonly scheduledPostService: ScheduledPostService,
     private readonly influencerService: InfluencerService,
+    private readonly redditService: RedditService,
     private readonly adService: AdService,
     private readonly cardService: CardService,
     private readonly feedbackService: FeedbackService,
@@ -610,31 +612,54 @@ export class UserService {
     file: Express.Multer.File,
     addScheduledPostDto: AddScheduledPostDto,
   ): Promise<any> {
-    const cloudinaryResponse = await this.cloudinaryService.uploadFile(
-      file,
-      'published-post-media',
-    );
-    const imageUrl = cloudinaryResponse.secure_url;
+    for (const platform of addScheduledPostDto.platform) {
+      if (platform === 'instagram') {
+        try {
+          const cloudinaryResponse = await this.cloudinaryService.uploadFile(
+            file,
+            'published-post-media',
+          );
+          const imageUrl = cloudinaryResponse.secure_url;
+          await this.httpService
+            .post(
+              `${process.env.MODEL_API}/publish-image`,
+              {
+                image_url: imageUrl,
+                caption: addScheduledPostDto.caption,
+              },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              },
+            )
+            .toPromise();
+        } catch (error) {
+          return { error: error };
+        }
+      }
 
-    try {
-      const res = await this.httpService
-        .post(
-          `${process.env.MODEL_API}/publish-image`,
-          {
-            image_url: imageUrl,
-            caption: addScheduledPostDto.caption,
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          },
-        )
-        .toPromise();
-      return { message: res.data.message };
-    } catch (error) {
-      return { error: error };
+      if (platform === 'facebook') {
+      }
+
+      if (platform === 'reddit') {
+        try {
+          const { caption, description, subreddit, flair_id, flair_text } =
+            addScheduledPostDto;
+          await this.redditService.createPostWithText(
+            subreddit,
+            caption,
+            description,
+            flair_id,
+            flair_text,
+          );
+        } catch (error) {
+          return { error: error };
+        }
+      }
     }
+
+    return { message: 'Posted Successfully' };
   }
 
   async calculateSentiment(caption: string): Promise<any> {

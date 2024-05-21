@@ -4,11 +4,11 @@ import { Model } from 'mongoose';
 import { User } from '../schemas/user.schema';
 import { SocialMediaCredentialsDto } from '../dto/social-media-credentials.dto';
 import axios from 'axios';
-import { SocialAccessToken } from '../dto/social-access-token.dto';
 import { SubredditDto } from '../dto/subreddit.dto';
 import { SchedulerService } from 'src/scheduler/services/scheduler.service';
 import { CreateRedditPostDto } from 'src/scheduler/dtos/create-reddit-post.dto';
 import { DeleteRedditPostDto } from 'src/scheduler/dtos/delete-reddit-post.dto';
+import { SubredditService } from 'src/subreddit/services/subreddit.service';
 
 interface RedditFlair {
   id: string;
@@ -24,15 +24,18 @@ export class RedditService {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<User>,
+    private readonly subredditService: SubredditService,
   ) {}
 
   async connectReddit(
     user,
     socialMediaCredentialsDto: SocialMediaCredentialsDto,
-  ): Promise<SocialAccessToken> {
+  ): Promise<any> {
     const { username, password } = socialMediaCredentialsDto;
-    const clientId = process.env.REDDIT_CLIENT_ID;
-    const clientSecret = process.env.REDDIT_SECRET;
+    // const clientId = process.env.REDDIT_CLIENT_ID;
+    const clientId = 'Zr5-8QSd2Rk1uWgVZRRriw';
+    // const clientSecret = process.env.REDDIT_SECRET;
+    const clientSecret = 'G1BoL6D_lkVNol0kdnsMmefbJaAaMQ';
     const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString(
       'base64',
     );
@@ -48,9 +51,11 @@ export class RedditService {
           },
         },
       );
+      console.log(response.data);
       const accessToken = response.data.access_token;
-      user.redditAccessToken = accessToken;
-      return await user.save();
+      console.log(accessToken);
+      // user.redditAccessToken = accessToken;
+      // return await user.save();
     } catch (error) {
       console.error('CONNECT_REDDIT.', error);
     }
@@ -67,6 +72,10 @@ export class RedditService {
     } catch (error) {
       console.error('FETCH_REDDIT_PROFILE.', error);
     }
+  }
+
+  async getSubreddits() {
+    return await this.subredditService.getSubreddits();
   }
 
   async viewRedditKarma(user: User): Promise<{}> {
@@ -217,19 +226,20 @@ export class RedditService {
   }
 
   async createPostWithText(
-    user: User,
+    // user: User,
     sr: string,
     title: string,
     text: string,
     flair_id: string,
     flair_text: string,
   ): Promise<any> {
-    const subredditExists = await this.checkSubredditExists(sr);
-    if (!subredditExists) {
-      console.error('Subreddit does not exist');
-    }
-    // const allowedMedia = this.checkAllowedMediaTypes(sr);
-    // console.log(allowedMedia)
+    // const subredditExists = await this.checkSubredditExists(sr);
+    // if (!subredditExists) {
+    //   console.error('Subreddit does not exist');
+    // }
+
+    const token =
+      'eyJhbGciOiJSUzI1NiIsImtpZCI6IlNIQTI1NjpzS3dsMnlsV0VtMjVmcXhwTU40cWY4MXE2OWFFdWFyMnpLMUdhVGxjdWNZIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyIiwiZXhwIjoxNzE2MzYwNjU4LjYzNTQxNSwiaWF0IjoxNzE2Mjc0MjU4LjYzNTQxNCwianRpIjoiWnZpSHl5Y3ZnM2MwbHJRYTFaS3hoZF8yLWNhcDlnIiwiY2lkIjoiWnI1LThRU2QyUmsxdVdnVlpSUnJpdyIsImxpZCI6InQyXzEwdDNsc3p1YjEiLCJhaWQiOiJ0Ml8xMHQzbHN6dWIxIiwibGNhIjoxNzE2MjczMDY5OTI5LCJzY3AiOiJlSnlLVnRKU2lnVUVBQURfX3dOekFTYyIsImZsbyI6OX0.quydDVSrR_G8Pmj9xOouf1YHhRTvdqzFKHL4sE4j1n0T4HImxTkBuVlRsuKCPzz9uUO-LAUDkMiL96XxqO3aBvKDxfgARHR3S6WHNrSVCbt_v3xjDEoqZIUHzA8KSs4gNv4iLJj3m9plZcAeaQ4uG1igdly6RyvJyTme427pU2S1T1v40rm333oZXUZz0IZ7tGVOcZTl_elDkWDw1SLcMqj5JqaNaJoJQPLMIeLkr7AYh-ZKPP5uNEBGovd38qNxS2MR3Y9ZUmOCapHbYswCq3gd6FPCzcIxlFtHJSb9SKYA7YjY2OboHlQgd7Y0gclLoE9S96CTs3qKMNggFVlMVg';
 
     const formData = new FormData();
     formData.append('sr', sr);
@@ -237,10 +247,8 @@ export class RedditService {
     formData.append('text', text);
     formData.append('kind', 'self');
     formData.append('resubmit', 'true');
-    if (flair_id != '') {
-      formData.append('flair_id', flair_id);
-      formData.append('flair_text', flair_text);
-    }
+    formData.append('flair_id', flair_id);
+    formData.append('flair_text', flair_text);
 
     const response = await axios.post(
       'https://oauth.reddit.com/api/submit',
@@ -248,7 +256,7 @@ export class RedditService {
       {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${user.redditAccessToken}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -385,52 +393,66 @@ export class RedditService {
     user: User,
     subredditDto: SubredditDto,
   ): Promise<RedditFlair[]> {
-    const { subreddit } = subredditDto;
+    const { name } = subredditDto;
 
     // Check if the subreddit exists
-    if (!(await this.checkSubredditExists(subreddit))) {
-      throw new Error('Subreddit does not exist');
-    }
+    // if (!(await this.checkSubredditExists(subreddit))) {
+    //   throw new Error('Subreddit does not exist');
+    // }
 
-    try {
-      const response = await axios.get(
-        `https://oauth.reddit.com/r/${subreddit}/api/link_flair_v2`,
-        {
-          headers: {
-            Authorization: `Bearer ${user.redditAccessToken}`,
+    // console.log(user.access_token);
+
+    // const tokenObject = user.access_token.find((at) => {
+    //   if (at.platform === 'reddit'){
+    //     console.log(at);
+    //   }
+    // });
+    // console.log(tokenObject);
+
+    const token =
+      'eyJhbGciOiJSUzI1NiIsImtpZCI6IlNIQTI1NjpzS3dsMnlsV0VtMjVmcXhwTU40cWY4MXE2OWFFdWFyMnpLMUdhVGxjdWNZIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyIiwiZXhwIjoxNzE2MzYwNjU4LjYzNTQxNSwiaWF0IjoxNzE2Mjc0MjU4LjYzNTQxNCwianRpIjoiWnZpSHl5Y3ZnM2MwbHJRYTFaS3hoZF8yLWNhcDlnIiwiY2lkIjoiWnI1LThRU2QyUmsxdVdnVlpSUnJpdyIsImxpZCI6InQyXzEwdDNsc3p1YjEiLCJhaWQiOiJ0Ml8xMHQzbHN6dWIxIiwibGNhIjoxNzE2MjczMDY5OTI5LCJzY3AiOiJlSnlLVnRKU2lnVUVBQURfX3dOekFTYyIsImZsbyI6OX0.quydDVSrR_G8Pmj9xOouf1YHhRTvdqzFKHL4sE4j1n0T4HImxTkBuVlRsuKCPzz9uUO-LAUDkMiL96XxqO3aBvKDxfgARHR3S6WHNrSVCbt_v3xjDEoqZIUHzA8KSs4gNv4iLJj3m9plZcAeaQ4uG1igdly6RyvJyTme427pU2S1T1v40rm333oZXUZz0IZ7tGVOcZTl_elDkWDw1SLcMqj5JqaNaJoJQPLMIeLkr7AYh-ZKPP5uNEBGovd38qNxS2MR3Y9ZUmOCapHbYswCq3gd6FPCzcIxlFtHJSb9SKYA7YjY2OboHlQgd7Y0gclLoE9S96CTs3qKMNggFVlMVg';
+
+    if (token) {
+      try {
+        const response = await axios.get(
+          `https://oauth.reddit.com/r/${name}/api/link_flair_v2`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
-      const flairs: RedditFlair[] = response.data.map((flair: any) => {
-        // Emoji
-        if (flair.richtext && flair.richtext.length > 0) {
-          const richtext = flair.richtext[0];
-          const emojiUrl = flair.richtext[1]?.u || '';
-          const background_color = flair.background_color;
-          const text_color = flair.text_color;
+        );
+        const flairs: RedditFlair[] = response.data.map((flair: any) => {
+          // Emoji
+          if (flair.richtext && flair.richtext.length > 0) {
+            const richtext = flair.richtext[0];
+            const emojiUrl = flair.richtext[1]?.u || '';
+            const background_color = flair.background_color;
+            // const text_color = flair.text_color;
 
-          return {
-            id: flair.id,
-            text: richtext.t,
-            emojiUrl: emojiUrl,
-            background_color: background_color,
-            text_color: flair.text_color,
-          };
-        } else {
-          // No emoji
-          return {
-            id: flair.id,
-            text: flair.text,
-            emojiUrl: '',
-            background_color: flair.background_color,
-            text_color: flair.text_color,
-          };
-        }
-      });
+            return {
+              id: flair.id,
+              text: richtext.t,
+              emojiUrl: emojiUrl,
+              background_color: background_color,
+              text_color: flair.text_color,
+            };
+          } else {
+            // No emoji
+            return {
+              id: flair.id,
+              text: flair.text,
+              emojiUrl: '',
+              background_color: flair.background_color,
+              text_color: flair.text_color,
+            };
+          }
+        });
 
-      return flairs;
-    } catch (error) {
-      console.error('FETCH_SUBREDDIT_FLAIRS.SUBREDDIT HAS NO FLAIRS');
+        return flairs;
+      } catch (error) {
+        console.error('FETCH_SUBREDDIT_FLAIRS.SUBREDDIT HAS NO FLAIRS');
+      }
     }
   }
 

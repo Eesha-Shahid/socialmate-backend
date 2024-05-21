@@ -7,10 +7,10 @@ import { Ad } from '../schemas/ads.schema';
 export class AdService {
   constructor(
     @InjectModel(Ad.name)
-    private AdModel: Model<Ad>,
+    private adModel: Model<Ad>,
   ) {}
 
   async getAds(): Promise<any> {
-    return await this.AdModel.find();
+    return await this.adModel.find();
   }
 }
