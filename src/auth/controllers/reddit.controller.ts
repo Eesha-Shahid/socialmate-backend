@@ -14,6 +14,7 @@ import { RedditService } from '../services/reddit.service';
 import { FormDataRequest } from 'nestjs-form-data';
 import { SubredditDto } from '../dto/subreddit.dto';
 import { DeleteRedditPostDto } from 'src/scheduler/dtos/delete-reddit-post.dto';
+import { SocialMediaCredentialsDto } from '../dto/social-media-credentials.dto';
 
 @Controller('reddit')
 @UseGuards(RolesAuthGuard)
@@ -23,12 +24,12 @@ export class RedditController {
   @Post('login')
   @Roles(UserType.Standard, UserType.Premium)
   async saveRedditAccessToken(
-    @Body() SocialMediaCredentialsDto: SocialMediaCredentialsDto,
+    @Body() socialMediaCredentialsDto: SocialMediaCredentialsDto,
     @Req() req,
   ) {
     return await this.redditService.connectReddit(
       req.user,
-      SocialMediaCredentialsDto,
+      socialMediaCredentialsDto,
     );
   }
 
