@@ -44,7 +44,6 @@ export class MailService {
   async sendEmail(mailOptions: object): Promise<boolean> {
     try {
       const res = await this.mailerService.sendMail(mailOptions);
-      console.log(res);
       return true;
     } catch (error) {
       return error;

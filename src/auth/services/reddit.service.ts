@@ -45,7 +45,6 @@ export class RedditService {
           },
         },
       );
-      console.log(response.data);
       const accessToken = response.data.access_token;
       console.log(accessToken);
       // user.redditAccessToken = accessToken;

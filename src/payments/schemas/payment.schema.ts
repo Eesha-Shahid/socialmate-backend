@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { SubscriptionStatus } from 'src/common/enums';
+import { SubscriptionStatus } from 'src/common/enums/subscription.enum';
 
 @Schema({ timestamps: true })
 export class Payment {
   [x: string]: any;
 
-  @Prop()
+  @Prop({ type: String, enum: Object.values(SubscriptionStatus) })
   status: SubscriptionStatus;
 
   @Prop()

@@ -11,7 +11,6 @@ import { InfluencerService } from 'src/influencer/services/influencer.service';
 import { InfluencerDto } from '../dto/toggle-influencer.dto';
 import { AddCardDto } from 'src/card/dto/add-card.dto';
 import { CardService } from 'src/card/services/card.service';
-import { SubscriptionStatus, UserType } from 'src/common/enums';
 import { StripeService } from 'src/payments/services/stripe.service';
 import { UpdateCardDto } from 'src/card/dto/update-card.dto';
 import { AddScheduledPostDto } from 'src/scheduledPost/dto/add-scheduled-post.dto';
@@ -20,6 +19,8 @@ import { AdService } from 'src/ads/services/ads.service';
 import { FeedbackService } from 'src/feedback/services/feedback.service';
 import { SubmitFeedbackDto } from '../dto/submit-feedback.dto';
 import { RedditService } from './reddit.service';
+import { UserType } from 'src/common/enums/users.enum';
+import { SubscriptionStatus } from 'src/common/enums/subscription.enum';
 const { ObjectId } = mongoose.Types;
 
 @Injectable()
@@ -130,7 +131,6 @@ export class UserService {
       card_id: defaultCard._id,
       user_id: user._id,
     };
-
     try {
       await this.userModel.findByIdAndUpdate(
         userId,
@@ -143,6 +143,21 @@ export class UserService {
     } catch (error) {
       console.error('SUBSCRIBE.', error);
       return null;
+    }
+  }
+
+  async unsubscribe(userId: string) {
+    try {
+      const activeSubscription =
+        await this.stripeService.findActiveSubscription(userId);
+      const inactiveSubscription =
+        await this.stripeService.inactivateSubscription(activeSubscription);
+      return {
+        subscription: inactiveSubscription,
+        message: 'Unsubscribed Successfully',
+      };
+    } catch (error) {
+      return { error: error, message: 'Error Unsubscribing' };
     }
   }
 
@@ -614,7 +629,6 @@ export class UserService {
   async publishScheduledPost(
     addScheduledPostDto: AddScheduledPostDto,
   ): Promise<any> {
-    console.log(addScheduledPostDto);
     for (const platform of addScheduledPostDto.platform) {
       if (platform === 'instagram') {
         try {
@@ -965,7 +979,6 @@ export class UserService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async generateCaptionFromImage(file: Express.Multer.File): Promise<any> {
     try {
-      console.log('Called');
       const res = await this.httpService
         .post(
           `${process.env.MODEL_API}/generate-caption-from-image`,

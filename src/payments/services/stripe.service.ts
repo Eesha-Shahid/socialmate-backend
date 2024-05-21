@@ -4,6 +4,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Payment } from '../schemas/payment.schema';
 import { SavePaymentDto } from '../dto/save-payment.dto';
+import { SubscriptionStatus } from 'src/common/enums/subscription.enum';
+import * as mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 @Injectable()
 export class StripeService {
@@ -25,48 +28,6 @@ export class StripeService {
       email,
     });
   }
-
-  // Used for adding a card
-  // async createToken(credentials: CredentialsDto) {
-  //   return await this.stripe.tokens.create({
-  //     // @ts-ignore
-  //     card: {
-  //       number: credentials.number,
-  //       exp_month: credentials.exp_month,
-  //       exp_year: credentials.exp_year,
-  //     },
-  //   });
-  // }
-
-  // async createPaymentMethod(tokenId: string) {
-  //   return await this.stripe.paymentMethods.create({
-  //     type: 'card',
-  //     card: {
-  //       token: tokenId,
-  //     },
-  //   });
-  // }
-
-  // async attachPaymentMethod(methodId: string, customerId: string) {
-  //   return await this.stripe.paymentMethods.attach(methodId, {
-  //     customer: customerId,
-  //   });
-  // }
-
-  // // Used for deleting card
-  // async detachPaymentMethod(methodId: string) {
-  //   return await this.stripe.paymentMethods.detach(methodId);
-  // }
-
-  // async create(
-  //   createPaymentDto: CreatePaymentDto,
-  //   user: User,
-  // ): Promise<Payment> {
-  //   const data = Object.assign(createPaymentDto, { user: user._id });
-  //   const res = await this.paymentModel.create(data);
-
-  //   return res;
-  // }
 
   async createPaymentIntent(cusomterID: string) {
     const paymentIntent = await this.stripe.paymentIntents.create({
@@ -94,5 +55,33 @@ export class StripeService {
 
   async savePayment(savePaymentDto: SavePaymentDto): Promise<Payment | null> {
     return await this.paymentModel.create(savePaymentDto);
+  }
+
+  async findActiveSubscription(userId: string): Promise<Payment | null> {
+    try {
+      const activeSubscription = await this.paymentModel.findOne({
+        user_id: new ObjectId(userId),
+        status: SubscriptionStatus.Active,
+      });
+      return activeSubscription;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async inactivateSubscription(
+    activeSubscription: Payment,
+  ): Promise<Payment | null> {
+    try {
+      const subscription = await this.paymentModel.findById(
+        activeSubscription._id,
+      );
+      subscription.status = SubscriptionStatus.Inactive;
+      await subscription.save();
+      return subscription;
+    } catch (error) {
+      console.error('INACTIVATE_SUBSCRIPTION.ERROR', error);
+      return null;
+    }
   }
 }

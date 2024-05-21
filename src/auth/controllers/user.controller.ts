@@ -40,7 +40,6 @@ export class UserController {
   @Post('add-card')
   @Roles(UserType.Standard, UserType.Premium)
   async addCard(@Req() req, @Body() addCardDto: AddCardDto) {
-    console.log(addCardDto);
     return await this.userService.addCard(req.user.id, addCardDto);
   }
 
@@ -48,6 +47,12 @@ export class UserController {
   @Roles(UserType.Standard, UserType.Premium)
   async subscribe(@Req() req) {
     return await this.userService.subscribe(req.user.id);
+  }
+
+  @Post('unsubscribe')
+  @Roles(UserType.Standard, UserType.Premium)
+  async unsubscribe(@Req() req) {
+    return await this.userService.unsubscribe(req.user.id);
   }
 
   @Post('set-default-card')

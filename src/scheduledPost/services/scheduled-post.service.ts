@@ -43,7 +43,6 @@ export class ScheduledPostService {
       );
       return { post };
     } catch (error) {
-      console.log(error);
       return { post: null, message: error };
     }
   }

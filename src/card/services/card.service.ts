@@ -14,7 +14,6 @@ export class CardService {
   ) {}
 
   async addCard(addCardDto: AddCardDto): Promise<any> {
-    console.log(addCardDto);
     return await this.cardModel.create(addCardDto);
   }
 
