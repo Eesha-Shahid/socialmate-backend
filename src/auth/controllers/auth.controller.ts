@@ -42,6 +42,7 @@ export class AuthController {
   signUp(
     @Body() signUpDto: SignUpDto,
   ): Promise<{ token: string; message: string }> {
+    console.log(signUpDto);
     return this.authService.signUp(signUpDto);
   }
 

@@ -83,13 +83,13 @@ export class AuthService {
         username: name,
         email,
         googleAuth: true,
+        profile_pic: image,
       });
       await newUser.save();
-      const updatedUser = await this.updateUserProfilePic(newUser.id, image);
       const token = this.jwtService.sign({ id: newUser.id });
-      return { updatedUser, token };
+      return { newUser, token, message: 'Google Signup Successful' };
     } else {
-      console.error('GOOGLE_LOGIN.USER_ALREADY_EXISTS');
+      console.error('GOOGLE_SIGNUP.USER_ALREADY_EXISTS');
     }
   }
 
@@ -97,7 +97,7 @@ export class AuthService {
     const user = await this.userModel.findOne({ email: email });
     if (user) {
       const token = this.jwtService.sign({ id: user.id });
-      return { user, token };
+      return { user, token, message: 'Google Login Successful' };
     } else {
       console.error('GOOGLE_LOGIN.USER_DOES_NOT_EXIST');
     }

@@ -31,7 +31,7 @@ export class StripeService {
 
   async createPaymentIntent(cusomterID: string) {
     const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: 250,
+      amount: 1200,
       currency: 'usd',
       customer: cusomterID,
       automatic_payment_methods: {

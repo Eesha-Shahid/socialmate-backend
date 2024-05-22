@@ -139,7 +139,17 @@ export class UserService {
         },
         { new: true },
       );
-      return await this.stripeService.savePayment(savePaymentDto);
+      const paymentResult =
+        await this.stripeService.savePayment(savePaymentDto);
+
+      return {
+        amount: paymentResult.amount,
+        card_id: paymentResult.card_id,
+        status: paymentResult.status,
+        expiration_date: paymentResult.expiration_date,
+        card_number: defaultCard.card_number,
+        holder_name: defaultCard.holder_name,
+      };
     } catch (error) {
       console.error('SUBSCRIBE.', error);
       return null;
@@ -887,12 +897,6 @@ export class UserService {
               },
             },
             {
-              $project: {
-                _id: 0,
-                // user_id: 0,
-              },
-            },
-            {
               $sort: {
                 expiration_date: -1,
               },
@@ -937,6 +941,7 @@ export class UserService {
       },
       {
         $project: {
+          _id: 1,
           user_id: 1,
           status: 1,
           expiration_date: 1,
